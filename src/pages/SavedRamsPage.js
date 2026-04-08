@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { useSavedRamsDocuments } from '../hooks/useSavedRamsDocuments';
 import { useAllRamsDocuments } from '../hooks/useAllRamsDocuments';
 
 const formatDateTime = (value) => {
@@ -30,18 +29,12 @@ const buildShareLink = (shareCode) => {
 const SavedRamsPage = () => {
   const navigate = useNavigate();
   const { user: currentUser, loading: authLoading } = useAuth();
-  const [viewMode, setViewMode] = useState('mine'); // 'mine' or 'all'
-
-  // Use different hooks based on view mode
-  const myDocumentsHook = useSavedRamsDocuments(currentUser);
-  const allDocumentsHook = useAllRamsDocuments(currentUser);
-
   const {
     documents,
     loading,
     indexWarning,
     deleteDocument,
-  } = viewMode === 'mine' ? myDocumentsHook : allDocumentsHook;
+  } = useAllRamsDocuments(currentUser);
 
   const [feedback, setFeedback] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -84,15 +77,10 @@ const SavedRamsPage = () => {
     }
   }, []);
 
-  const handleDelete = useCallback(async (documentId, isOwner) => {
+  const handleDelete = useCallback(async (documentId) => {
     clearMessages();
     if (!documentId) {
       setErrorMessage('Missing RAMS document identifier.');
-      return;
-    }
-
-    if (!isOwner) {
-      setErrorMessage('You can only delete your own RAMS documents.');
       return;
     }
 
@@ -113,13 +101,8 @@ const SavedRamsPage = () => {
     }
   }, [deleteDocument]);
 
-  const handleContinueEditing = useCallback((documentId, isOwner) => {
+  const handleContinueEditing = useCallback((documentId) => {
     if (!documentId) {
-      return;
-    }
-    if (!isOwner) {
-      setErrorMessage('You can only edit your own RAMS documents.');
-      setTimeout(() => setErrorMessage(''), 4000);
       return;
     }
     clearMessages();
@@ -173,9 +156,7 @@ const SavedRamsPage = () => {
               <tr>
                 <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Client</th>
                 <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Project</th>
-                {viewMode === 'all' && (
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Created By</th>
-                )}
+                <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Created By</th>
                 <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Last Updated</th>
                 <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Share Link</th>
                 <th scope="col" className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Actions</th>
@@ -184,7 +165,7 @@ const SavedRamsPage = () => {
             <tbody className="divide-y divide-slate-200">
               {sortedDocuments.map((docMeta) => {
                 const shareLink = buildShareLink(docMeta.shareCode);
-                const isOwner = docMeta.isOwner || docMeta.ownerUid === currentUser?.uid;
+                const isOwner = docMeta.ownerUid === currentUser?.uid;
                 return (
                   <tr key={docMeta.id} className="hover:bg-slate-50">
                     <td className="px-4 py-3 text-sm font-semibold text-slate-800">
@@ -198,11 +179,7 @@ const SavedRamsPage = () => {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-600">{docMeta.projectDescription || '—'}</td>
-                    {viewMode === 'all' && (
-                      <td className="px-4 py-3 text-sm text-slate-600">
-                        {docMeta.ownerName || 'Unknown'}
-                      </td>
-                    )}
+                    <td className="px-4 py-3 text-sm text-slate-600">{docMeta.ownerName || 'Unknown'}</td>
                     <td className="px-4 py-3 text-sm text-slate-500">{formatDateTime(docMeta.updatedAt)}</td>
                     <td className="px-4 py-3 text-sm text-slate-600">
                       {shareLink ? (
@@ -229,16 +206,10 @@ const SavedRamsPage = () => {
                     <td className="px-4 py-3 text-right text-sm">
                       <div className="flex flex-wrap justify-end gap-2">
                         <button
-                          onClick={() => handleContinueEditing(docMeta.id, isOwner)}
-                          disabled={!isOwner}
-                          className={`inline-flex items-center gap-1 rounded border px-3 py-1.5 text-xs font-semibold transition ${
-                            isOwner
-                              ? 'border-slate-300 text-slate-600 hover:border-[var(--uctel-blue)] hover:text-[var(--uctel-blue)]'
-                              : 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
-                          }`}
-                          title={isOwner ? 'Edit this RAMS' : 'You can only edit your own RAMS'}
+                          onClick={() => handleContinueEditing(docMeta.id)}
+                          className="inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-[var(--uctel-blue)] hover:text-[var(--uctel-blue)]"
                         >
-                          {isOwner ? 'Continue editing' : 'View only'}
+                          Continue editing
                         </button>
                         {docMeta.shareCode && (
                           <a
@@ -251,16 +222,13 @@ const SavedRamsPage = () => {
                           </a>
                         )}
                         <button
-                          onClick={() => handleDelete(docMeta.id, isOwner)}
-                          disabled={pendingDeleteId === docMeta.id || !isOwner}
+                          onClick={() => handleDelete(docMeta.id)}
+                          disabled={pendingDeleteId === docMeta.id}
                           className={`inline-flex items-center gap-1 rounded border px-3 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-red-300 ${
                             pendingDeleteId === docMeta.id
                               ? 'cursor-wait border-red-200 bg-red-100 text-red-400'
-                              : !isOwner
-                              ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
                               : 'border-red-200 text-red-600 hover:border-red-400 hover:text-red-700'
                           }`}
-                          title={isOwner ? 'Delete this RAMS' : 'You can only delete your own RAMS'}
                         >
                           {pendingDeleteId === docMeta.id ? 'Deleting…' : 'Delete'}
                         </button>
@@ -282,43 +250,14 @@ const SavedRamsPage = () => {
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold text-slate-800">Saved RAMS</h1>
-            <p className="text-sm text-slate-500">
-              {viewMode === 'mine'
-                ? 'Manage your saved risk assessments, copy share links, or remove outdated drafts.'
-                : 'View all RAMS created by the UCtel team.'}
-            </p>
+            <p className="text-sm text-slate-500">All UCtel RAMS documents. Anyone can edit any document.</p>
           </div>
-          <div className="flex items-center gap-3">
-            {/* View Mode Toggle */}
-            <div className="inline-flex rounded-lg border border-slate-300 bg-white p-1 shadow-sm">
-              <button
-                onClick={() => setViewMode('mine')}
-                className={`rounded-md px-4 py-2 text-sm font-semibold transition ${
-                  viewMode === 'mine'
-                    ? 'bg-[var(--uctel-blue)] text-white'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                My RAMS
-              </button>
-              <button
-                onClick={() => setViewMode('all')}
-                className={`rounded-md px-4 py-2 text-sm font-semibold transition ${
-                  viewMode === 'all'
-                    ? 'bg-[var(--uctel-blue)] text-white'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                All RAMS
-              </button>
-            </div>
-            <button
-              onClick={() => navigate('/')}
-              className="inline-flex items-center gap-2 rounded border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-[var(--uctel-blue)] hover:text-[var(--uctel-blue)] focus:outline-none focus:ring-2 focus:ring-[var(--uctel-blue)]"
-            >
-              Back to RAMS Builder
-            </button>
-          </div>
+          <button
+            onClick={() => navigate('/')}
+            className="inline-flex items-center gap-2 rounded border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-[var(--uctel-blue)] hover:text-[var(--uctel-blue)] focus:outline-none focus:ring-2 focus:ring-[var(--uctel-blue)]"
+          >
+            Back to RAMS Builder
+          </button>
         </div>
 
         {indexWarning && (

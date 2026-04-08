@@ -126,12 +126,7 @@ export const useAllRamsDocuments = (currentUser) => {
       throw new Error('This RAMS document no longer exists.');
     }
 
-    const data = snapshot.data();
-    // Only allow deletion if user is the owner
-    if (data.ownerUid !== currentUser.uid) {
-      throw new Error('You can only delete your own RAMS documents.');
-    }
-
+    // Anyone can delete any RAMS (team shared)
     await deleteDoc(documentRef);
   }, [currentUser]);
 

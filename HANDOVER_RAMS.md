@@ -1,6 +1,6 @@
 # HANDOVER — RAMS Generator
 
-**Version:** 1.0 (initial documentation pass)
+**Version:** 0.0.47
 **Status:** Active development — `develop` branch, no production deployment yet from this repo clone
 **Last updated:** 2026-06-30
 
@@ -43,6 +43,7 @@ UCtel Portal (auth.uctel.co.uk)
 | API endpoints | `api/session.js`, `api/portal-callback.js`, `api/logout.js`, `api/get-rams-share.js`, `api/generate-pdf.js` |
 | API utilities | `api/utils/firebaseAdmin.js`, `api/utils/portalAuth.js` |
 | Firebase client init | `src/firebase.js` |
+| Version script | `scripts/sync-version.js` |
 | Dev server | `server.js` (Express, port 3101) |
 | Firestore index | `firestore.indexes.json` |
 | Firestore rules | `firestore.rules` |
@@ -90,10 +91,10 @@ RAMS_DEV_PORTAL_BYPASS=true  (dev only)
 ## Current State (2026-06-30)
 
 - Repo cloned from `github.com/dj-iv/rams` to `c:/_VSC/UCtel_Portal/rams`
-- `develop` branch active — 2 commits: initial documentation pass + SEC header format fix
+- `develop` branch active — 7 commits (v0.0.47)
+- Version auto-syncs from git commit count via `scripts/sync-version.js` and pre-commit hook
 - No `.env.local` configured locally — app will not run until env vars are set
 - No Vercel project linked yet
-- Documentation pass complete: SEC markers added to 10 source files, handover files created
 
 ---
 
@@ -101,9 +102,9 @@ RAMS_DEV_PORTAL_BYPASS=true  (dev only)
 
 | Date | Change | Detail |
 |------|--------|--------|
+| 2026-06-30 | Auto-sync version from git commit count (`scripts/sync-version.js`, pre-commit hook) | [CHANGELOG_RAMS.md](CHANGELOG_RAMS.md) |
 | 2026-06-30 | Add version display to page footer (`v{version}` via `package.json`) | [CHANGELOG_RAMS.md](CHANGELOG_RAMS.md) |
 | 2026-06-30 | Initial documentation pass -- SEC markers + handover files | [CHANGELOG_RAMS.md](CHANGELOG_RAMS.md) |
-| 2026-06-30 | SEC header format: replaced em dash with `--` for ASCII safety | [CHANGELOG_RAMS.md](CHANGELOG_RAMS.md) |
 
 ---
 

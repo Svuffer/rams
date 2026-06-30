@@ -1,6 +1,6 @@
 {
   "name": "rams-generator",
-  "version": "0.1.0",
+  "version": "0.0.47",
   "private": true,
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
@@ -28,8 +28,11 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
+    "version-sync": "node scripts/sync-version.js",
     "dev": "concurrently \"npm run serve-api\" \"npm start\"",
+    "prestart": "node scripts/sync-version.js",
     "start": "cross-env PORT=3304 react-scripts start",
+    "prebuild": "node scripts/sync-version.js",
     "build": "CI=false react-scripts build",
     "serve-api": "node server.js",
     "test": "react-scripts test",

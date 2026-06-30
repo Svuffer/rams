@@ -1,3 +1,7 @@
+// [SEC 100] Imports & state init
+// SEC 100  Imports & state init        React, react-to-print, PrintableDocument, axios
+// SEC 200  PDF generation & printing   inlineImages · handlePrint · handleGeneratePdf
+// SEC 300  JSX render                  modal overlay · sticky header · print-only container · export
 import React, { useRef, useState } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import PrintableDocument from './PrintableDocument';
@@ -6,7 +10,9 @@ import axios from 'axios'; // For PDFShift API calls
 const PreviewModal = ({ isOpen, onClose, data, allTasks }) => {
     const printableRef = useRef(null);
     const [isGenerating, setIsGenerating] = useState(false);
+// [SEC 100 END]
 
+// [SEC 200] PDF generation & printing
     // Function to inline images as base64
     const inlineImages = async (container) => {
         const imgs = Array.from(container.querySelectorAll('img'));
@@ -109,7 +115,9 @@ const PreviewModal = ({ isOpen, onClose, data, allTasks }) => {
     };
 
     if (!isOpen) return null;
+// [SEC 200 END]
 
+// [SEC 300] JSX render
     return (
         <>
             <div className="preview-modal-overlay no-print" style={{
@@ -217,3 +225,4 @@ const PreviewModal = ({ isOpen, onClose, data, allTasks }) => {
 };
 
 export default PreviewModal;
+// [SEC 300 END]

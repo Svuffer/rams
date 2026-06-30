@@ -1,3 +1,8 @@
+// [SEC 100] Imports & helpers
+// SEC 100  Imports & helpers          portalAuth imports · firebaseAdmin · APP_ID · readBody
+// SEC 200  ensureFirebaseUser         Firebase user sync: get/create/update user, resolve email conflicts
+// SEC 300  Request handler            entry · method check · dev bypass · session validation
+// SEC 400  Token generation           ensureFirebaseUser call · custom token · response
 const {
   getSessionCookieName,
   parseCookies,
@@ -13,7 +18,9 @@ const {
 const { getRamsAuth } = require('./utils/firebaseAdmin')
 
 const APP_ID = 'rams'
+// [SEC 100 END]
 
+// [SEC 200] ensureFirebaseUser
 function readBody(req) {
   if (req.method !== 'POST') {
     return {}
@@ -143,7 +150,9 @@ async function ensureFirebaseUser(auth, { uid, email, displayName }) {
     throw error
   }
 }
+// [SEC 200 END]
 
+// [SEC 300] Request handler
 module.exports = async (req, res) => {
   const method = req.method || 'GET'
   if (!['GET', 'POST', 'HEAD'].includes(method)) {
@@ -226,7 +235,9 @@ module.exports = async (req, res) => {
     sendUnauthorized('Portal session required')
     return
   }
+// [SEC 300 END]
 
+// [SEC 400] Token generation
   try {
     const auth = getRamsAuth()
     const firebaseUser = await ensureFirebaseUser(auth, session)
@@ -275,3 +286,4 @@ module.exports = async (req, res) => {
     res.end(JSON.stringify({ error: 'Failed to establish Firebase session', redirect: logoutUrl }))
   }
 }
+// [SEC 400 END]

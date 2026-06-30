@@ -1,3 +1,7 @@
+// [SEC 100] Imports & inline form components
+// SEC 100  Imports & inline form components   NewHazardForm · NewRiskCategoryForm
+// SEC 200  Step4 component                    state init · edit handlers
+// SEC 300  JSX render                         category list · hazard list · inline edit forms
 import React, { useState, useEffect } from 'react';
 import { Input, TextArea, SelectInput } from '../ui/FormControls'; // Input is needed for the new form
 
@@ -93,7 +97,9 @@ const NewRiskCategoryForm = ({ onSave, onCancel }) => {
         </div>
     );
 };
+// [SEC 100 END]
 
+// [SEC 200] Step4 component
 const Step4 = ({ data, handlers, addingHazardTo, showNewRiskCategoryForm }) => {
     const [editingHazard, setEditingHazard] = useState(null);
     const [editingCategoryId, setEditingCategoryId] = useState(null);
@@ -120,6 +126,8 @@ const Step4 = ({ data, handlers, addingHazardTo, showNewRiskCategoryForm }) => {
     };
 
     return (
+// [SEC 200 END]
+// [SEC 300] JSX render
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-[var(--uctel-blue)] border-b-2 border-[var(--uctel-orange)] pb-2 flex-grow">Step 4: Identify Risks</h2>
@@ -274,3 +282,4 @@ const Step4 = ({ data, handlers, addingHazardTo, showNewRiskCategoryForm }) => {
 };
 
 export default Step4;
+// [SEC 300 END]

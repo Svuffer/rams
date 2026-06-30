@@ -1,9 +1,22 @@
+// [SEC 100] Imports & constants
+// SEC 100  Imports & constants         React, Router, Firebase, components, hooks, portal URL
+// SEC 200  Utility functions           generateShareCode · buildInitialTasks · buildDefaultSignatureBlock
+// SEC 300  Inline components           NewTaskForm · NewTemplateForm · AddNewOptionForm · TaskItem · Step3
+// SEC 400  AppContent init             hooks · state declarations · auth-change effect
+// SEC 500  Auth & session handlers     buildPortalLogoutUrl · handleLogout
+// SEC 600  Document CRUD               handleSaveDocument · handleLoadDocument · copy link · init useEffects
+// SEC 700  Form field handlers         handleInputChange · task toggle/option/description · image upload
+// SEC 800  Safety logistics handlers   handleSafetyLogisticsChange · list toggle · add/edit/remove items & categories
+// SEC 900  Task/team/risk handlers     handleUpdateTaskDefault · signature · drag · team CRUD · risk CRUD · risk toggle
+// SEC 1000 Equipment list handlers     handleSelectableListToggle · handleCustomItemChange · addCustomItem · removeCustomItem
+// SEC 1100 Navigation & render         TOTAL_STEPS · renderStep · progressLabels · handlePreview · main JSX
+// SEC 1200 App wrapper                 Router · Routes · export
 import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import uctelLogo from './assets/uctel-logo.png';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { db } from './firebase'; 
-import { collection, getDocs, doc, setDoc, deleteDoc, addDoc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore'; 
+import { db } from './firebase';
+import { collection, getDocs, doc, setDoc, deleteDoc, addDoc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { DEFAULT_PERMITS, DEFAULT_PPE, DEFAULT_TOOLS, DEFAULT_MATERIALS } from './constants';
 import Step1 from './components/steps/Step1';
 import Step2 from './components/steps/Step2';
@@ -18,7 +31,9 @@ import { useSavedRamsDocuments } from './hooks/useSavedRamsDocuments';
 import SavedRamsPage from './pages/SavedRamsPage';
 
 const PORTAL_BASE_URL = process.env.REACT_APP_PORTAL_URL || 'http://localhost:3300';
+// [SEC 100 END]
 
+// [SEC 200] Utility functions
 const generateShareCode = () => {
   const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';
   const length = 14;
@@ -76,7 +91,9 @@ const buildDefaultSignatureBlock = (preparedByValue, documentDate) => ({
   mode: 'typed',
   signatureImage: null,
 });
-  
+// [SEC 200 END]
+
+// [SEC 300] Inline components
 // UPDATED: This is now a simple inline form, not a modal.
 const NewTaskForm = ({ onSave, onCancel }) => {
     const [title, setTitle] = useState('');
@@ -370,7 +387,9 @@ const Step3 = ({ data, allTasks, allTemplates, handlers, showNewTemplateForm, sh
         </div>
     );
 };
+// [SEC 300 END]
 
+// [SEC 400] AppContent init
 // Main App component (renamed to AppContent to avoid conflicts)
 const AppContent = () => {
   const navigate = useNavigate();
@@ -405,7 +424,9 @@ const AppContent = () => {
       setActiveShareCode(null);
     }
   }, [currentUser]);
+// [SEC 400 END]
 
+// [SEC 500] Auth & session handlers
   const prepareFormForPersistence = useCallback(() => {
     if (!formData) {
       return null;
@@ -459,7 +480,9 @@ const AppContent = () => {
       window.location.assign(buildPortalLogoutUrl(redirectTarget));
     }
   }, [buildPortalLogoutUrl]);
+// [SEC 500 END]
 
+// [SEC 600] Document CRUD
   const handleSaveDocument = useCallback(async () => {
     if (!formData) {
       return;
@@ -700,7 +723,9 @@ useEffect(() => {
     };
     fetchData();
   }, []);
+// [SEC 600 END]
 
+// [SEC 700] Form field handlers
   const handleInputChange = useCallback((e) => {
     const { name, value, type, checked } = e.target;
     const finalValue = type === 'checkbox' ? checked : value;
@@ -757,6 +782,9 @@ useEffect(() => {
           )
       }));
   }, []);
+// [SEC 700 END]
+
+// [SEC 800] Safety logistics handlers
   const handleSafetyLogisticsChange = useCallback((categoryId, field, value) => {
     setFormData(prev => ({
         ...prev,
@@ -1023,7 +1051,9 @@ useEffect(() => {
       return nextState;
     });
     }, []);
+// [SEC 800 END]
 
+// [SEC 900] Risk handlers
   // Handle updating the default description for a task type
   const handleUpdateTaskDefault = useCallback((taskId, uniqueId) => {
     // Find the current task's description
@@ -1437,7 +1467,9 @@ useEffect(() => {
       return { ...prev, risks: newRisks };
     });
   };
+// [SEC 900 END]
 
+// [SEC 1000] Equipment list handlers
   const handleSelectableListToggle = useCallback(async (listName, itemId) => {
     const itemToUpdate = formData[listName].find(item => item.id === itemId);
     if (!itemToUpdate) return;
@@ -1498,7 +1530,9 @@ useEffect(() => {
       console.error(`Error removing custom item from ${listName}:`, error);
     }
   }, []);
+// [SEC 1000 END]
 
+// [SEC 1100] Navigation & render
   const TOTAL_STEPS = 7;
   const nextStep = () => setStep(s => Math.min(s + 1, TOTAL_STEPS));
   const prevStep = () => setStep(s => Math.max(s - 1, 1));
@@ -1693,7 +1727,9 @@ useEffect(() => {
     </>
   );
 };
+// [SEC 1100 END]
 
+// [SEC 1200] App wrapper
 const App = () => (
   <Router>
     <Routes>
@@ -1707,3 +1743,4 @@ const App = () => (
 );
 
 export default App;
+// [SEC 1200 END]

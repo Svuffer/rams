@@ -1,3 +1,15 @@
+// [SEC 100] Imports & risk utilities
+// SEC 100  Imports & risk utilities   getRiskColor · getRiskLevelClass · getRiskLevelText
+// SEC 200  Reusable sub-components    Section · DetailItem
+// SEC 300  Component init             props · data filtering · signature processing
+// SEC 400  Style definitions          tableHeaderStyle · cellStyle · riskCell · signature styles · page calc
+// SEC 500  Document header            logo · title
+// SEC 600  Table of contents          dynamic TOC with section/page references
+// SEC 700  Sections 1–3              Project Details · Project Team · Method Statement
+// SEC 800  Section 4                  Risk Assessments (initial + residual tables per category)
+// SEC 900  Sections 5–6              Safety & Logistics · Equipment (PPE/Tools/Materials)
+// SEC 1000 Section 7                  Risk Summary & Analysis
+// SEC 1100 Section 8 & print CSS     Approval & Sign-Off · @media print styles
 import React from 'react';
 import riskEvaluationMatrix from '../assets/risk-evaluation-matrix.png';
 import uctelLogo from '../assets/uctel-logo.png';
@@ -29,7 +41,9 @@ const getRiskLevelText = (score) => {
     if (score >= 1) return 'VERY LOW';
     return 'NONE';
 };
+// [SEC 100 END]
 
+// [SEC 200] Reusable sub-components
 const Section = ({ title, children }) => (
     <div style={{ marginTop: '40px', pageBreakInside: 'avoid' }}>
         <h2 style={{ color: '#2c4f6b', borderBottom: '2px solid #008080', paddingBottom: '5px', marginBottom: '20px' }}>
@@ -65,7 +79,9 @@ const DetailItem = ({ label, value }) => (
         </div>
     </div>
 );
+// [SEC 200 END]
 
+// [SEC 300] Component init
 const PrintableDocument = ({ data, allTasks }) => {
     if (!data) {
         return <div>Loading document...</div>;
@@ -107,7 +123,9 @@ const PrintableDocument = ({ data, allTasks }) => {
     const signatureImageSrc = signatureMode === 'image' ? signatureDetails?.signatureImage?.dataUrl : null;
     const matchingTeamMember = (projectTeam || []).find(member => member.name && member.name === signatureName);
     const signatureRole = matchingTeamMember?.role || (projectTeam && projectTeam[0]?.role) || 'Not specified';
+// [SEC 300 END]
 
+// [SEC 400] Style definitions
     const tableHeaderStyle = {
         backgroundColor: '#004a63', // darker blue like screenshot
         color: '#ffffff',
@@ -186,7 +204,9 @@ const PrintableDocument = ({ data, allTasks }) => {
         { label: '6.2 Tools & Equipment' },
         { label: '6.3 Materials' }
     ];
+// [SEC 400 END]
 
+// [SEC 500] Document header
     return (
         <div className="printable-document" style={{ fontFamily: 'Arial, sans-serif', color: '#333', padding: '15px', backgroundColor: 'white', maxWidth: 'none', width: '700px', margin: '0 auto' }}>
             <header style={{ 
@@ -219,6 +239,8 @@ const PrintableDocument = ({ data, allTasks }) => {
             </header>
 
             {/* Enhanced Table of Contents */}
+            {/* [SEC 500 END] */}
+            {/* [SEC 600] Table of contents */}
             <Section title="Table of Contents" className="toc-section">
                 <div style={{ 
                     padding: '15px', 
@@ -290,6 +312,8 @@ const PrintableDocument = ({ data, allTasks }) => {
             {/* Page Break */}
             <div className="page-break"></div>
 
+            {/* [SEC 600 END] */}
+            {/* [SEC 700] Sections 1–3: Project Details · Project Team · Method Statement */}
             <Section title="1.0 Project Details">
                 <div style={{ 
                     display: 'grid', 
@@ -554,6 +578,8 @@ const PrintableDocument = ({ data, allTasks }) => {
             {/* Conditional Page Break - only if there are risks to display */}
             {selectedRiskEntries.length > 0 && enabledTasks.length > 0 && <div className="page-break"></div>}
 
+            {/* [SEC 700 END] */}
+            {/* [SEC 800] Section 4: Risk Assessments */}
             <Section title="4.0 Risk Assessments">
                 {selectedRiskEntries
                     .map(([key, riskCategory], categoryIndex) => {
@@ -691,6 +717,8 @@ const PrintableDocument = ({ data, allTasks }) => {
             </Section>
 
             {/* Conditional Page Break - only if there are safety/logistics items */}
+            {/* [SEC 800 END] */}
+            {/* [SEC 900] Sections 5–6: Safety & Logistics · Equipment */}
             {safetyLogistics.length > 0 && <div className="page-break"></div>}
 
             <Section title="5.0 Safety & Logistics">
@@ -792,6 +820,8 @@ const PrintableDocument = ({ data, allTasks }) => {
             </Section>
 
             {/* Conditional Page Break - only if there are risks to summarize */}
+            {/* [SEC 900 END] */}
+            {/* [SEC 1000] Section 7: Risk Summary & Analysis */}
             {selectedRiskEntries.length > 0 && <div className="page-break"></div>}
 
             <Section title="7.0 Risk Summary & Analysis">
@@ -970,6 +1000,8 @@ const PrintableDocument = ({ data, allTasks }) => {
             </Section>
 
             {/* Conditional Page Break before Approval - only if there's substantial content above */}
+            {/* [SEC 1000 END] */}
+            {/* [SEC 1100] Section 8: Approval & Sign-Off + print CSS */}
             {(selectedRiskEntries.length > 0 || enabledTasks.length > 2) && <div className="page-break"></div>}
 
             <Section title="8.0 Approval & Sign-Off">
@@ -1057,3 +1089,4 @@ const PrintableDocument = ({ data, allTasks }) => {
 };
 
 export default PrintableDocument;
+// [SEC 1100 END]

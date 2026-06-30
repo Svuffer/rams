@@ -1,7 +1,9 @@
-// [SEC 100] Imports & inline form components
+// Section map -- grep "[SEC NNN]" to jump to any section; numbers are stable even as line numbers drift.
 // SEC 100  Imports & inline form components   NewHazardForm · NewRiskCategoryForm
 // SEC 200  Step4 component                    state init · edit handlers
 // SEC 300  JSX render                         category list · hazard list · inline edit forms
+
+// [SEC 100] Imports & inline form components
 import React, { useState, useEffect } from 'react';
 import { Input, TextArea, SelectInput } from '../ui/FormControls'; // Input is needed for the new form
 

@@ -1,7 +1,9 @@
-// [SEC 100] Imports & category sub-components
+// Section map -- grep "[SEC NNN]" to jump to any section; numbers are stable even as line numbers drift.
 // SEC 100  Imports & category sub-components   BooleanWithTextCategory · TextAreaCategory · AddNewCategoryForm
 // SEC 200  Step5 component                     state init · edit helpers · renderCategoryEditForm · renderHeaderActions
 // SEC 300  JSX render                          category list (switch on type) · add category footer
+
+// [SEC 100] Imports & category sub-components
 import React, { useState } from 'react';
 import SelectableList from '../ui/SelectableList';
 import { TextArea } from '../ui/FormControls';

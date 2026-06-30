@@ -1,8 +1,10 @@
-// [SEC 100] Imports & entry
+// Section map -- grep "[SEC NNN]" to jump to any section; numbers are stable even as line numbers drift.
 // SEC 100  Imports & entry        node-fetch · handler entry point · method check · API key check
 // SEC 200  Image inlining         regex replace img src → base64 data URIs from filesystem
 // SEC 300  HTML wrapping          font embedding · wrappedHtml construction with print CSS
 // SEC 400  PDFlayer API call      POST to pdflayer · response streaming
+
+// [SEC 100] Imports & entry
 // Use node-fetch for server-side HTTP calls
 const fetch = require('node-fetch');
 

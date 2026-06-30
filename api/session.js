@@ -1,8 +1,10 @@
-// [SEC 100] Imports & helpers
+// Section map -- grep "[SEC NNN]" to jump to any section; numbers are stable even as line numbers drift.
 // SEC 100  Imports & helpers          portalAuth imports · firebaseAdmin · APP_ID · readBody
 // SEC 200  ensureFirebaseUser         Firebase user sync: get/create/update user, resolve email conflicts
 // SEC 300  Request handler            entry · method check · dev bypass · session validation
 // SEC 400  Token generation           ensureFirebaseUser call · custom token · response
+
+// [SEC 100] Imports & helpers
 const {
   getSessionCookieName,
   parseCookies,

@@ -1,7 +1,9 @@
-// [SEC 100] Imports & state init
+// Section map -- grep "[SEC NNN]" to jump to any section; numbers are stable even as line numbers drift.
 // SEC 100  Imports & state init        React, react-to-print, PrintableDocument, axios
 // SEC 200  PDF generation & printing   inlineImages · handlePrint · handleGeneratePdf
 // SEC 300  JSX render                  modal overlay · sticky header · print-only container · export
+
+// [SEC 100] Imports & state init
 import React, { useRef, useState } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import PrintableDocument from './PrintableDocument';

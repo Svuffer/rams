@@ -1,4 +1,4 @@
-// [SEC 100] Imports & risk utilities
+// Section map -- grep "[SEC NNN]" to jump to any section; numbers are stable even as line numbers drift.
 // SEC 100  Imports & risk utilities   getRiskColor · getRiskLevelClass · getRiskLevelText
 // SEC 200  Reusable sub-components    Section · DetailItem
 // SEC 300  Component init             props · data filtering · signature processing
@@ -10,6 +10,8 @@
 // SEC 900  Sections 5–6              Safety & Logistics · Equipment (PPE/Tools/Materials)
 // SEC 1000 Section 7                  Risk Summary & Analysis
 // SEC 1100 Section 8 & print CSS     Approval & Sign-Off · @media print styles
+
+// [SEC 100] Imports & risk utilities
 import React from 'react';
 import riskEvaluationMatrix from '../assets/risk-evaluation-matrix.png';
 import uctelLogo from '../assets/uctel-logo.png';

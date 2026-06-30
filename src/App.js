@@ -1,4 +1,4 @@
-// [SEC 100] Imports & constants
+// Section map -- grep "[SEC NNN]" to jump to any section; numbers are stable even as line numbers drift.
 // SEC 100  Imports & constants         React, Router, Firebase, components, hooks, portal URL
 // SEC 200  Utility functions           generateShareCode · buildInitialTasks · buildDefaultSignatureBlock
 // SEC 300  Inline components           NewTaskForm · NewTemplateForm · AddNewOptionForm · TaskItem · Step3
@@ -11,6 +11,8 @@
 // SEC 1000 Equipment list handlers     handleSelectableListToggle · handleCustomItemChange · addCustomItem · removeCustomItem
 // SEC 1100 Navigation & render         TOTAL_STEPS · renderStep · progressLabels · handlePreview · main JSX
 // SEC 1200 App wrapper                 Router · Routes · export
+
+// [SEC 100] Imports & constants
 import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import uctelLogo from './assets/uctel-logo.png';

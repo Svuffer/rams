@@ -1,9 +1,11 @@
-// [SEC 100] Imports & constants
+// Section map -- grep "[SEC NNN]" to jump to any section; numbers are stable even as line numbers drift.
 // SEC 100  Imports & constants        crypto · SESSION_COOKIE · SESSION_DURATION_SECONDS · getPortalBaseUrl · getSecret
 // SEC 200  Token verification         verifyPortalToken (HMAC-SHA256 validate + payload decode)
 // SEC 300  Cookie management          encodeSessionValue · decodeSessionCookie · createSessionCookie · serializeCookie · parseCookies
 // SEC 400  URL builders               sanitizeRedirect · buildPortalLoginUrl · buildPortalLaunchUrl · buildPortalLogoutUrl
 // SEC 500  Request origin & exports   resolveProto · getRequestOrigin · module.exports
+
+// [SEC 100] Imports & constants
 const crypto = require('crypto')
 const { Buffer } = require('node:buffer')
 

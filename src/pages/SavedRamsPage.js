@@ -1,8 +1,10 @@
-// [SEC 100] Imports, helpers & state init
+// Section map -- grep "[SEC NNN]" to jump to any section; numbers are stable even as line numbers drift.
 // SEC 100  Imports, helpers & state init   formatDateTime · buildShareLink · hooks · state
 // SEC 200  Action handlers                 handleCopyLink · handleDelete · handleContinueEditing
 // SEC 300  renderContent                   auth check · loading · empty state · documents table
 // SEC 400  Main JSX return                 page shell · warnings · feedback · export
+
+// [SEC 100] Imports, helpers & state init
 import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';

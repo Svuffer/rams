@@ -1,8 +1,10 @@
-// [SEC 100] Imports & state init
+// Section map -- grep "[SEC NNN]" to jump to any section; numbers are stable even as line numbers drift.
 // SEC 100  Imports & state init    React hooks, React Router, PrintableDocument
 // SEC 200  Data fetching           useEffect fetchDocument · inlineImages helper
 // SEC 300  PDF generation          handleDownloadPdf · taskLookup memo
 // SEC 400  JSX render              loading/error states · main return · formatDate · export
+
+// [SEC 100] Imports & state init
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import PrintableDocument from './PrintableDocument';

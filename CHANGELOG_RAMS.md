@@ -4,7 +4,17 @@ All entries newest-first. Every entry includes a **Rollback** line.
 
 ---
 
-## 2026-06-30 — Initial documentation pass
+## 2026-06-30 — Add version display to page footer
+
+- Imported `version` from `package.json` in `src/App.js` (SEC 100)
+- Added `<footer>` element to main app page rendering `v{version}` (SEC 1100)
+- Version in footer now stays in sync with `package.json` automatically
+
+**Rollback:** `git revert 114436d` on the `develop` branch.
+
+---
+
+
 
 - Repo cloned from `github.com/dj-iv/rams` to `c:/_VSC/UCtel_Portal/rams`
 - Created `develop` branch for all ongoing development

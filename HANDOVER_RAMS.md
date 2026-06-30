@@ -101,7 +101,8 @@ RAMS_DEV_PORTAL_BYPASS=true  (dev only)
 
 | Date | Change | Detail |
 |------|--------|--------|
-| 2026-06-30 | Initial documentation pass — SEC markers + handover files | [CHANGELOG_RAMS.md](CHANGELOG_RAMS.md) |
+| 2026-06-30 | Add version display to page footer (`v{version}` via `package.json`) | [CHANGELOG_RAMS.md](CHANGELOG_RAMS.md) |
+| 2026-06-30 | Initial documentation pass -- SEC markers + handover files | [CHANGELOG_RAMS.md](CHANGELOG_RAMS.md) |
 | 2026-06-30 | SEC header format: replaced em dash with `--` for ASCII safety | [CHANGELOG_RAMS.md](CHANGELOG_RAMS.md) |
 
 ---

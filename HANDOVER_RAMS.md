@@ -90,10 +90,19 @@ RAMS_DEV_PORTAL_BYPASS=true  (dev only)
 ## Current State (2026-06-30)
 
 - Repo cloned from `github.com/dj-iv/rams` to `c:/_VSC/UCtel_Portal/rams`
-- `develop` branch created; no commits yet beyond initial clone
+- `develop` branch active — 2 commits: initial documentation pass + SEC header format fix
 - No `.env.local` configured locally — app will not run until env vars are set
 - No Vercel project linked yet
-- Documentation pass in progress (this session): SEC markers + handover files being added
+- Documentation pass complete: SEC markers added to 10 source files, handover files created
+
+---
+
+## Recent Fixes
+
+| Date | Change | Detail |
+|------|--------|--------|
+| 2026-06-30 | Initial documentation pass — SEC markers + handover files | [CHANGELOG_RAMS.md](CHANGELOG_RAMS.md) |
+| 2026-06-30 | SEC header format: replaced em dash with `--` for ASCII safety | [CHANGELOG_RAMS.md](CHANGELOG_RAMS.md) |
 
 ---
 

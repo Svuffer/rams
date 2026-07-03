@@ -42,5 +42,5 @@ These apply in every session. Full reference: `c:/_VSC/UCtel_Portal/UNIVERSAL_HA
 
 1. Read this file
 2. Read `HANDOVER_RAMS.md` — current state, outstanding items
-3. Check `c:/Users/Miroslav/.claude/projects/c---VSC-UCtel-Portal/memory/MEMORY.md`
+3. Check your local AI memory index (if configured) for user preferences and project rules
 4. Verify any file paths or function references before acting on them

@@ -1,8 +1,8 @@
 # HANDOVER — RAMS Generator
 
-**Version:** 0.0.47
+**Version:** see `package.json` — auto-synced to `0.0.{git commit count}` by `scripts/sync-version.js`
 **Status:** Active development — `develop` branch, no production deployment yet from this repo clone
-**Last updated:** 2026-06-30
+**Last updated:** 2026-07-03
 
 ---
 
@@ -43,7 +43,8 @@ UCtel Portal (auth.uctel.co.uk)
 | API endpoints | `api/session.js`, `api/portal-callback.js`, `api/logout.js`, `api/get-rams-share.js`, `api/generate-pdf.js` |
 | API utilities | `api/utils/firebaseAdmin.js`, `api/utils/portalAuth.js` |
 | Firebase client init | `src/firebase.js` |
-| Version script | `scripts/sync-version.js` |
+| Version script | `scripts/sync-version.js` (writes `package.json` + generated `src/version.js`) |
+| Git hooks (tracked) | `scripts/hooks/` — activated via `npm install` |
 | Dev server | `server.js` (Express, port 3101) |
 | Firestore index | `firestore.indexes.json` |
 | Firestore rules | `firestore.rules` |
@@ -88,11 +89,11 @@ RAMS_DEV_PORTAL_BYPASS=true  (dev only)
 
 ---
 
-## Current State (2026-06-30)
+## Current State (2026-07-03)
 
-- Repo cloned from `github.com/dj-iv/rams` to `c:/_VSC/UCtel_Portal/rams`
-- `develop` branch active — 7 commits (v0.0.47)
-- Version auto-syncs from git commit count via `scripts/sync-version.js` and pre-commit hook
+- Repo forked to `github.com/Svuffer/rams`; PR #1 open against `dj-iv/rams:main`
+- `develop` branch active — version auto-syncs to `0.0.{commit count}` via `scripts/sync-version.js`
+- Git hooks live in tracked `scripts/hooks/` — activated by `npm install` (`prepare` script sets `core.hooksPath`); fresh clones must run `npm install` before committing
 - No `.env.local` configured locally — app will not run until env vars are set
 - No Vercel project linked yet
 

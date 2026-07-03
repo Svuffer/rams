@@ -19,6 +19,7 @@ const ShareView = () => {
 // [SEC 100 END]
 
 // [SEC 200] Data fetching
+  useEffect(() => {
     let cancelled = false;
     const fetchDocument = async () => {
       setLoading(true);

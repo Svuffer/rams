@@ -4,6 +4,28 @@ All entries newest-first. Every entry includes a **Rollback** line.
 
 ---
 
+## 2026-07-03 -- v0.0.49: Fix PR review findings (build breaks + portability)
+
+Fixes for issues flagged by automated review on `dj-iv/rams` PR #1:
+
+- `src/components/ShareView.js`: restored `useEffect(() => {` opener that was accidentally
+  removed during the SEC marker pass (unmatched brace -- syntax error)
+- `src/App.js`: replaced `import { version } from '../package.json'` (CRA forbids imports
+  outside `src/`, build would fail) with generated `src/version.js` module
+- `scripts/sync-version.js`: now exits without writing when git is unavailable instead of
+  clobbering the version to `0.0.0`; also generates `src/version.js`
+- Pre-commit hook moved from untracked `.git/hooks/` to tracked `scripts/hooks/`,
+  activated by the `prepare` npm script (`git config core.hooksPath scripts/hooks`) --
+  fresh clones get the hook via `npm install`
+- `package.json`: `build` script now uses `cross-env CI=false` (plain `CI=false` fails on
+  Windows; `cross-env` was already a devDependency)
+- `HANDOVER.md`: removed user-specific local path from session checklist
+- `HANDOVER_RAMS.md`: version header no longer hardcoded (points at `package.json`)
+
+**Rollback:** `git revert <this commit>` on `develop`.
+
+---
+
 ## 2026-06-30 -- v0.0.47: Auto-sync version from git commit count
 
 - Added `scripts/sync-version.js` -- sets `package.json` version to `0.0.{commit_count}`
@@ -11,6 +33,7 @@ All entries newest-first. Every entry includes a **Rollback** line.
   - `--dry` flag: prints next version without writing (check before writing commit message)
 - Wired `prestart` and `prebuild` npm hooks -- version syncs automatically on every start/build
 - Added `.git/hooks/pre-commit` -- bumps and stages `package.json` before every commit
+  (local-only; superseded in v0.0.49 by tracked hooks in `scripts/hooks/`)
 - Commit message convention going forward: `component: vX.Y.Z -- description`
 
 **Rollback:** `git revert c0ead07` on `develop`.

@@ -4,6 +4,27 @@ All entries newest-first. Every entry includes a **Rollback** line.
 
 ---
 
+## 2026-08-20 -- v2.1.0: Edit/delete for standard tasks, PPE, Tools, Materials
+
+Request: "I'd also like to be able to edit and delete these and everything within the Personal Protective Equipment (PPE), Plant / Equipment / Tools and Materials sections also."
+
+**PPE / Tools / Materials (Step 6), and Permits (Step5, same shared component):**
+- `src/components/ui/SelectableList.js`: `canEditItem`/`canDeleteItem` required `item.isCustom` -- edit/delete already existed and were already wired at every call site, just invisible for anything not added as a custom item during the current session. Dropped the `isCustom` requirement so it applies to every item.
+- Confirm-dialog text "Remove this custom item?" -> "Remove this item?", since it's no longer custom-only.
+- Verified against a real non-custom item seeded directly into Firestore (simulating an actual default/seeded item, not a testing artifact) -- Edit/Delete now appear and both work correctly.
+- Side effect, flagged not hidden: Permits (Step5) shares this exact component and gains the same capability automatically, even though only PPE/Tools/Materials were named in the request.
+
+**Standard tasks (Step 3, "Configure & Order Sequence of Works"):**
+- Previously create-only. New `EditTaskForm` component (mirrors `NewTaskForm`), new `handleUpdateStandardTask`/`handleDeleteStandardTask` handlers in `App.js`.
+- Edit updates `title` + the task's `options.default.description` only -- does not touch per-document task descriptions already customized in the RAMS currently being built (those are independent, user-edited text, not meant to be silently overwritten by a master-task edit).
+- Delete removes the `standardTasks` doc and also drops any now-orphaned entries from the current document's `selectedTasks` (the existing code already rendered `null` for a missing task definition rather than crashing, but left a dead array entry -- now cleaned up).
+- Found and deliberately left alone: the existing "Update Default" button on each task is a separate, seemingly incomplete pre-existing feature -- it only writes to local React state (never Firestore) and sets a `defaultDescription` field nothing else reads. Not in scope for this change.
+- Verified end-to-end against the real running app: created a task, edited it, deleted it, confirmed removal.
+
+**Rollback:** `git revert <this commit>`.
+
+---
+
 ## 2026-08-20 -- v2.0.9: Add job template editing
 
 Follow-up to v2.0.8 (template deletion) -- there was still no way to fix a typo or update a template's description without deleting and recreating it (losing the ID in the process).

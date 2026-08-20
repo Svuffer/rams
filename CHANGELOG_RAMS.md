@@ -4,6 +4,22 @@ All entries newest-first. Every entry includes a **Rollback** line.
 
 ---
 
+## 2026-08-20 -- v1.0.0: Remove auto-versioning (shallow-clone bug), first production deploy
+
+The app went live at https://rams-six.vercel.app this session (via PR #2 -> `dj-iv/rams:main`, commit `90d66ec`). Once live, the footer showed `v0.0.18` instead of the real version -- traced to `scripts/sync-version.js` computing version as `0.0.{git rev-list --count HEAD}`, which is accurate in a full local clone but silently wrong under Vercel's shallow git checkout (confirmed: true count from a full clone was 52, Vercel's shallow clone only saw enough history to compute 18). The command doesn't fail in a shallow clone, it just returns incomplete data, so the earlier "keep existing version if git is unavailable" safety net never triggered.
+
+- Deleted `scripts/sync-version.js`, `scripts/hooks/pre-commit`, generated `src/version.js`
+- Removed `prepare`, `prestart`, `prebuild`, `version-sync` from `package.json` scripts
+- `package.json` `version` is now a plain hand-bumped field (`1.0.0`), no longer git-derived
+- Added committed `.env` with `REACT_APP_VERSION=$npm_package_version` -- CRA's own documented dotenv-expand pattern; npm sets `npm_package_version` automatically from `package.json` on every `npm run`, so no custom script is needed at all
+- Un-ignored plain `.env` in `.gitignore` (was previously ignoring it alongside `.env.local`, which is non-standard CRA convention -- `.env` is meant to hold committed shared defaults, `.env.local` for private overrides)
+- `src/App.js`: footer now reads `process.env.REACT_APP_VERSION` instead of importing a generated `./version` module
+- Verified locally: `"1.0.0"` confirmed present in both the `npm start` dev bundle and a real `npm run build` output before committing
+
+**Rollback:** `git revert <this commit>` restores the auto-sync mechanism -- reintroduces the shallow-clone bug, only do this if the replacement itself causes an unrelated problem. Note: per this session's other finding, a revert pushed by anyone other than an existing Vercel team member won't deploy until the per-committer block (see `HANDOVER_RAMS.md` §Current State) is resolved or worked around.
+
+---
+
 ## 2026-08-20 -- v0.0.50: Fix `prepare` script hard-fail + pin `engines.node`
 
 Both issues found live via a Vercel CLI dry-run deploy earlier this session (see the entry below). Fix verified by re-running the exact same dry-run -- build now completes (`readyState: READY`), where it previously failed with `npm error code 128`.

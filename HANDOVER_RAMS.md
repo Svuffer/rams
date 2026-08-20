@@ -1,7 +1,7 @@
 # HANDOVER — RAMS Generator
 
-**Version:** see `package.json` — auto-synced to `0.0.{git commit count}` by `scripts/sync-version.js`
-**Status:** Active development — `develop` branch. PR #1 open against `dj-iv/rams:main` (upstream `main` is live in production via Vercel, under the "UCtel projects" team). Local dev environment working end-to-end against a dedicated sandbox Firebase project (see §Local Testing). The two deploy-breaking issues found via Vercel dry-run (`prepare` script, `engines.node`) are fixed and verified as of v0.0.50.
+**Version:** `package.json` `version` field — plain hand-bumped semver, currently `1.0.0`. No longer auto-derived from git commit count (that mechanism was removed 2026-08-20 — it silently produced wrong numbers under Vercel's shallow git clone; see §Current State).
+**Status:** **Live in production** at https://rams-six.vercel.app (deployed 2026-08-20). Local dev environment working end-to-end against a dedicated sandbox Firebase project (see §Local Testing).
 **Last updated:** 2026-08-20
 
 ---
@@ -43,8 +43,7 @@ UCtel Portal (auth.uctel.co.uk)
 | API endpoints | `api/session.js`, `api/portal-callback.js`, `api/logout.js`, `api/get-rams-share.js`, `api/generate-pdf.js` |
 | API utilities | `api/utils/firebaseAdmin.js`, `api/utils/portalAuth.js` |
 | Firebase client init | `src/firebase.js` |
-| Version script | `scripts/sync-version.js` (writes `package.json` + generated `src/version.js`) |
-| Git hooks (tracked) | `scripts/hooks/` — activated via `npm install` |
+| Version | `package.json` `version` field, exposed to the client via `REACT_APP_VERSION=$npm_package_version` in the committed `.env` — read in `src/App.js` as `process.env.REACT_APP_VERSION` |
 | Dev server | `server.js` (Express, port 3101) |
 | Firestore index | `firestore.indexes.json` |
 | Firestore rules | `firestore.rules` |
@@ -117,16 +116,16 @@ To test locally without the developer's real UCtel Portal / Firebase secrets, a 
 
 ## Current State (2026-08-20)
 
-- Repo forked to `github.com/Svuffer/rams`; PR #1 open against `dj-iv/rams:main`, state `MERGEABLE`, **no drift on `upstream/main`** (confirmed via `git fetch upstream` — zero commits landed there while `develop` was ahead)
-- `develop` branch active — version auto-syncs to `0.0.{commit count}` via `scripts/sync-version.js`
-- Git hooks live in tracked `scripts/hooks/` — activated by `npm install` (`prepare` script sets `core.hooksPath`); fresh clones must run `npm install` before committing
-- `.env.local` now configured against the sandbox Firebase project — see §Local Testing above. Local dev server confirmed working end-to-end for auth/session.
-- No Vercel project linked locally (`.vercel/`) — but a Vercel project **is** already connected to `dj-iv/rams` via GitHub integration under the "UCtel projects" team (proven by the "Vercel" PR check existing at all; this supersedes the old "no Vercel project linked yet" note, which was only ever true for local CLI linking)
-- **`dj-iv/rams` was briefly inaccessible (private, no access) between roughly 2026-08-17 and 2026-08-20.** Access restored — turned out to be a permissions gap, not a deletion. Nothing was lost; `upstream/main` was unchanged throughout.
-- **PR #1's Vercel check is `FAILURE`** — not a code problem. Vercel requires manual one-time authorization for preview deploys from a fork/external contributor (link scoped to the "UCtel projects" Vercel team). Neither Svuffer nor this session currently has access to that team to click Authorize.
-- **Real bug found via a Vercel CLI dry-run deploy** (`vercel --prod` under a personal Vercel team, uploading `develop`'s files directly, bypassing the team-access blocker above): the `prepare` npm script (`git config core.hooksPath scripts/hooks`) has no error handling. Vercel's CLI file-upload build environment has no `.git` directory, so `npm install` aborts with exit 128 (`fatal: not in a git directory`) and the whole build fails. **Not yet fixed** — see Outstanding. Whether this reproduces on a real GitHub-integration deploy (which typically clones with `.git` present) is unconfirmed either way, but the fix is cheap enough to apply regardless of the answer.
-- Same dry-run surfaced a Vercel warning: `Found invalid Node.js Version: "24.x". Please set "engines": { "node": "22.x" }` — `package.json` has no `engines.node` pin, so local and Vercel Node versions can silently diverge.
-- **Developer's proposed workflow: test locally, then push straight to `main`, skipping the PR-preview-approval bottleneck.** Diffed the whole PR against `upstream/main` to assess risk: 10 of 12 changed source/API files are comment-only (`[SEC NNN]` markers), zero logic changes. The two real behavior changes are additive (a version footer in `App.js`, the `sync-version.js` build scripts). Assessed as low-risk *if* the `prepare`/`engines.node` issues above are fixed first. A build-time failure is self-limiting on Vercel (production keeps serving the last good deploy if a new build errors), but a runtime-level bad deploy would need either Vercel Instant Rollback (needs "UCtel projects" team access — currently unavailable) or `git revert` on `main` + a fresh successful build.
+**The app is live in production:** https://rams-six.vercel.app, deployed from `dj-iv/rams:main` at commit `90d66ec`. Getting there took a few real detours, documented below because the cause of each isn't obvious from the code alone.
+
+- `.env.local` configured against a sandbox Firebase project for local dev — see §Local Testing above. Local dev server confirmed working end-to-end for auth/session.
+- **`dj-iv/rams` was briefly inaccessible (private, no access) between roughly 2026-08-17 and 2026-08-20.** Access came back, but `Svuffer/rams` (the fork) never re-registered as a fork of it afterward (`fork: false, parent: null` via the GitHub API) — this turned out to matter a lot, see below.
+- **PR #1 (the original fork-based PR) is dead — do not try to reuse it.** Pushing a new commit to it caused GitHub to auto-close it, and every attempt to reopen it (via `gh pr reopen`, via direct REST `PATCH state=open`) failed with `"state cannot be changed. The repository may be missing relevant data. Please contact support"`. Creating a *fresh* cross-repo PR from the same fork also failed (`"No commits between dj-iv:main and Svuffer:develop"`, `"not all refs are readable"`) — root cause was the severed fork relationship above; GitHub couldn't compute the cross-repo comparison anymore. No code or history was ever lost; this was purely a GitHub metadata problem.
+- **Fix: Svuffer already had `write` (collaborator) access directly on `dj-iv/rams`** (confirmed via `gh api repos/dj-iv/rams/collaborators/Svuffer/permission` → `"permission":"write"`). Pushed `develop` directly into `dj-iv/rams` as its own branch (`git push upstream develop:develop`), sidestepping the broken fork link entirely, then opened **PR #2** same-repo (`develop` → `main`) and merged it normally. This is now the working pattern — don't route through a fork for this repo again.
+- **Vercel deploys are blocked per-committer, not per-repo-permission — this is the important one to remember.** Even with GitHub write access and a clean merge, Vercel refused to deploy anything committed under Svuffer's GitHub identity, with an explicit bot comment: *"@Svuffer is attempting to deploy a commit to the UCtel projects team on Vercel, but is not a member of this team... Upgrade to pro and add @Svuffer as a member. A Pro subscription is required to access Vercel's collaborative features."* **Root cause: the "UCtel projects" Vercel team is on the free Hobby plan, which is single-user only** — it doesn't matter who has GitHub access, Vercel independently checks its own (paid-tier-gated) team membership before deploying. This blocked both PR #2's preview and the actual merge-to-`main` production deploy.
+- **Workaround used to actually ship (2026-08-20): had the repo owner (dj-iv) make a trivial, real edit himself** (renamed the README title, commit `90d66ec`), committed under his own already-privileged GitHub identity. That deploy went through immediately (`state: success`, confirmed live). This is a one-off unblock, not a fix — **every future commit authored by anyone other than an existing paid Vercel team member will hit this same wall.** Two real fixes exist (neither applied yet): make `dj-iv/rams` public (Vercel's team-membership restriction doesn't apply to public repos), or upgrade "UCtel projects" to Vercel Pro and add other contributors as members.
+- **Two real deploy-breaking bugs found via a Vercel CLI dry-run deploy earlier in this process, both fixed in v0.0.50 (now superseded by v1.0.0, see below):** the `prepare` npm script hard-failing `npm install` when no `.git` directory is present, and `engines.node` pinned to an unsupported `24.x`.
+- **A third, more subtle bug found after going live: the footer showed `v0.0.18` instead of the real version.** The auto-versioning script (`scripts/sync-version.js`) computed the version as `0.0.{git rev-list --count HEAD}` — accurate in a full local clone, but **Vercel does a shallow git checkout for its builds**, so `git rev-list --count` silently returned a much smaller, arbitrary number instead of erroring. Confirmed by comparing against the true count from a full local clone (52) vs. what was shown (18). **Fix (2026-08-20, v1.0.0): removed the entire auto-versioning mechanism** (`scripts/sync-version.js`, the tracked pre-commit hook, the generated `src/version.js`, the `prepare`/`prestart`/`prebuild` npm scripts) in favor of a plain hand-bumped `package.json` `version` field, exposed to the client via `REACT_APP_VERSION=$npm_package_version` in a committed `.env` file — CRA's own documented dotenv-expand pattern, not dependent on git history depth at all. Verified locally: `"1.0.0"` confirmed present in both the dev bundle and a real `npm run build` output.
 
 ---
 
@@ -134,6 +133,8 @@ To test locally without the developer's real UCtel Portal / Firebase secrets, a 
 
 | Date | Change | Detail |
 |------|--------|--------|
+| 2026-08-20 | **Deployed to production** (PR #2 → `dj-iv/rams:main`, https://rams-six.vercel.app) | [CHANGELOG_RAMS.md](CHANGELOG_RAMS.md) |
+| 2026-08-20 | Remove auto-versioning (shallow-clone bug), hand-bump version instead (v1.0.0) | [CHANGELOG_RAMS.md](CHANGELOG_RAMS.md) |
 | 2026-08-20 | Fix `prepare` script hard-fail + pin `engines.node` to 22.x (v0.0.50) | [CHANGELOG_RAMS.md](CHANGELOG_RAMS.md) |
 | 2026-07-03 | Fix PR review findings — build breaks + portability (v0.0.49) | [CHANGELOG_RAMS.md](CHANGELOG_RAMS.md) |
 | 2026-06-30 | Auto-sync version from git commit count (`scripts/sync-version.js`, pre-commit hook) | [CHANGELOG_RAMS.md](CHANGELOG_RAMS.md) |
@@ -146,13 +147,13 @@ To test locally without the developer's real UCtel Portal / Firebase secrets, a 
 
 - [x] Set up `.env.local` with Firebase credentials (2026-08-20 — sandbox project, not the real one; portal auth skipped via `RAMS_DEV_PORTAL_BYPASS`, see §Local Testing)
 - [x] Test portal auth flow locally — dev-bypass path confirmed working end-to-end (2026-08-20)
-- [x] **Fix `prepare` script to not hard-fail when `.git` is unavailable** (2026-08-20, v0.0.50) — `"prepare": "git config core.hooksPath scripts/hooks || true"`. Re-ran the same Vercel CLI dry-run that caught the original break; build now completes (`readyState: READY`).
-- [x] **Pin `engines.node` to `22.x`** in `package.json` (2026-08-20, v0.0.50) — was already present but set to `24.x`, which is what Vercel was actually warning about
-- [ ] Resolve Vercel "UCtel projects" team access (Svuffer needs an invite from whoever administers it, likely the developer) — blocks both authorizing PR #1's preview deploy and having a fast rollback lever (Instant Rollback) if a direct-to-`main` push ever needs one
-- [ ] Decide PR-merge vs direct-to-`main` path with the developer, after the two fixes above land
+- [x] Fix `prepare` script hard-fail + pin `engines.node` (2026-08-20, v0.0.50)
+- [x] Deploy to production (2026-08-20) — https://rams-six.vercel.app, see §Current State for the full path to get there
+- [x] Remove auto-versioning mechanism, replace with hand-bumped `package.json` version (2026-08-20, v1.0.0) — fixes the shallow-clone version bug
+- [ ] **Resolve the Vercel per-committer deploy block properly** — either make `dj-iv/rams` public, or upgrade "UCtel projects" to Vercel Pro and add contributors as members. Until this happens, every commit not authored by an existing paid team member will need the same "have dj-iv make the real commit" workaround used to ship v1.0.0 — not sustainable as a long-term pattern.
+- [ ] Clean up dead PR #1 (close formally, or leave — it's inert either way, just don't try to reuse it, see §Current State)
 - [ ] Get a real `PDFLAYER_KEY` (or accept the Puppeteer fallback) to test PDF generation locally — untested so far
-- [ ] Revert `src/firebase.js` to the real `rams-generator-bdcb7` config before any commit/push — currently locally modified for sandbox testing only, must not ship as-is
-- [ ] Tighten Firestore security rules (currently `allow read, write: if true`)
+- [ ] Tighten Firestore security rules (currently `allow read, write: if true`) — now more urgent since the app is live in production, not just a PR
 - [ ] Add React Error Boundary around `<AppContent>`
 - [ ] Extract Step 3 from `App.js` into `src/components/steps/Step3.js`
 - [ ] Remove hardcoded default form values (client name, site address) in `App.js:603–647`
@@ -165,20 +166,18 @@ To test locally without the developer's real UCtel Portal / Firebase secrets, a 
 
 ## Rollback Procedure
 
-**To undo any change on `develop`:**
+**To undo any change on `main` (now the live production branch):**
 ```bash
 git log --oneline          # find the commit to revert to
 git revert <commit-hash>   # creates a new revert commit (safe)
 # or for the last commit:
 git revert HEAD
+git push upstream main     # "upstream" = dj-iv/rams in this local clone
 ```
+
+**Important: a revert pushed by anyone other than an existing "UCtel projects" Vercel team member will hit the same per-committer deploy block described in §Current State.** GitHub-side the revert lands fine; Vercel just won't build it until either that access gap is resolved or dj-iv makes the actual triggering commit himself (or approves it via the Vercel dashboard). Don't assume a pushed revert has actually gone live without checking the commit's Vercel status (`gh api repos/dj-iv/rams/commits/<sha>/status`).
 
 **To discard all uncommitted changes:**
 ```bash
 git checkout -- .
-```
-
-**To return to `main` (production state):**
-```bash
-git checkout main
 ```

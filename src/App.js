@@ -31,7 +31,6 @@ import ShareView from './components/ShareView';
 import { useAuth } from './hooks/useAuth';
 import { useSavedRamsDocuments } from './hooks/useSavedRamsDocuments';
 import SavedRamsPage from './pages/SavedRamsPage';
-import { APP_VERSION } from './version';
 
 const PORTAL_BASE_URL = process.env.REACT_APP_PORTAL_URL || 'http://localhost:3300';
 // [SEC 100 END]
@@ -1719,7 +1718,7 @@ useEffect(() => {
             </div>
           </div>
           <footer className="mt-6 pb-2 text-center text-xs text-slate-400">
-            v{APP_VERSION}
+            v{process.env.REACT_APP_VERSION}
           </footer>
         </div>
       </div>

@@ -7,6 +7,8 @@ import {
   doc,
   getDoc,
   deleteDoc,
+  updateDoc,
+  serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -59,6 +61,9 @@ export const useAllRamsDocuments = (currentUser) => {
           ownerUid: data.ownerUid || null,
           ownerName: data.ownerName || data.ownerEmail || 'Unknown',
           isOwner: data.ownerUid === currentUser?.uid,
+          assignedEngineers: data.assignedEngineers || [],
+          assignedEngineerEmails: data.assignedEngineerEmails || [],
+          acceptances: data.acceptances || {},
         };
       });
 
@@ -130,11 +135,35 @@ export const useAllRamsDocuments = (currentUser) => {
     await deleteDoc(documentRef);
   }, [currentUser]);
 
+  const acceptDocument = useCallback(async (documentId, memberId, { name, email, signatureText }) => {
+    if (!currentUser?.uid) {
+      throw new Error('You must be signed in to accept a RAMS document.');
+    }
+    if (!documentId || !memberId) {
+      throw new Error('Missing RAMS document or team member identifier.');
+    }
+
+    const documentRef = doc(db, 'ramsDocuments', documentId);
+    // Dot-notation key targets just this one nested field, leaving other
+    // engineers' acceptances untouched. memberId is a plain numeric-string
+    // id (never contains '.' or '@'), so it's safe to use in a dot path --
+    // an email address would not be, since '.' is a path separator here.
+    await updateDoc(documentRef, {
+      [`acceptances.${memberId}`]: {
+        name: name || '',
+        email: email || '',
+        signatureText: signatureText || '',
+        acceptedAt: serverTimestamp(),
+      },
+    });
+  }, [currentUser]);
+
   return {
     documents,
     loading,
     indexWarning,
     error,
     deleteDocument,
+    acceptDocument,
   };
 };

@@ -4,6 +4,57 @@ All entries newest-first. Every entry includes a **Rollback** line.
 
 ---
 
+## 2026-08-20 -- v2.2.0: Engineer assignment + sign-off acceptance
+
+Request: assign a RAMS to the engineers doing the install, and let them acknowledge/accept it. Engineers confirmed to be existing UCtel staff with individual Google Workspace logins via the UCtel Portal (not external subcontractors) -- so acceptance can be gated by the already-authenticated `currentUser`, no new auth work needed.
+
+**Data model (schemaless additions, no migration needed):**
+- `teamMembers`: added `email` (previously absent entirely)
+- RAMS documents: added `assignedEngineers: [{id, name, email}]` and `assignedEngineerEmails: string[]` (computed from `projectTeam` on every save, top-level like the existing `client`/`siteAddress` summary fields, for the same reason -- cheap to read without parsing nested `formData`), and `acceptances: {}` (initialized once at document creation only, never touched by the update path, so re-saving a document never wipes existing sign-offs)
+- `acceptances` is keyed by **team-member id, not email** -- email addresses contain `.`, which Firestore's dot-notation `updateDoc` field paths treat as a nested-path separator, so `acceptances.a@b.co.uk` would not do what it looks like. Plain numeric-string ids have no such character, so they're safe.
+
+**Step 2 (Project Team):**
+- New Email field per team member row
+- New "Requires sign-off" checkbox per row -- marks that member as needing to accept this specific RAMS (a per-document flag, deliberately *not* written to the shared global `teamMembers` record the way name/role/phone/email already are, since "must sign this RAMS" isn't a persistent fact about a person)
+
+**New page `/assigned`** ("Assigned RAMS"), gated by portal login same as the existing `/saved` page:
+- Lists RAMS where `assignedEngineerEmails` contains `currentUser.email` (filtered client-side from `useAllRamsDocuments`, matching this app's existing fetch-then-filter style rather than a Firestore query -- avoids needing a composite index)
+- Split Pending / Accepted per document
+- Opening a pending one fetches the full document on demand and renders it read-only via the existing `PrintableDocument` component (same renderer the customer share view already uses), with a typed-name signature field pre-filled from the engineer's own team-member name, and an "Acknowledge & Accept" button
+- Accepting writes into `acceptances.{memberId}` via `updateDoc`'s dot-notation path -- touches only that one nested key, leaves other engineers' acceptances on the same document untouched
+- Re-opening an already-accepted document shows the recorded signer name + timestamp instead of the form
+
+**Deliberately kept simple:** sign-off is a typed name only, not the full typed/image-upload signature toggle already built for Step 1 -- narrower than what exists elsewhere in the app, but matches what was actually asked for; can be extended later.
+
+**Known limitation, explicitly deferred by request ("we'll get to it later"):** Firestore rules currently allow any authenticated UCtel staff member to write anything (the app's existing "team shared" model -- not something this feature makes worse). Nothing at the database level stops someone from writing a fake acceptance under another person's name via a direct write; the UI only ever signs under the current logged-in user's own identity, which is an app-level constraint, not a database-enforced one.
+
+**Verified end-to-end against the real running app** (not just a build check): assigned a test engineer via Step 2, saved, confirmed the document appeared as Pending on `/assigned` for that exact logged-in identity (had to add `RAMS_DEV_PORTAL_EMAIL` to `.env.local` so the dev-bypass session carries a real email to match against), reviewed the actual rendered document, signed, confirmed the status flipped to Accepted and re-opening showed the correct recorded signer name. Test data cleaned up from the sandbox project afterward.
+
+**Rollback:** `git revert <this commit>`.
+
+---
+
+## 2026-08-20 -- v2.1.0: Edit/delete for standard tasks, PPE, Tools, Materials
+
+Request: "I'd also like to be able to edit and delete these and everything within the Personal Protective Equipment (PPE), Plant / Equipment / Tools and Materials sections also."
+
+**PPE / Tools / Materials (Step 6), and Permits (Step5, same shared component):**
+- `src/components/ui/SelectableList.js`: `canEditItem`/`canDeleteItem` required `item.isCustom` -- edit/delete already existed and were already wired at every call site, just invisible for anything not added as a custom item during the current session. Dropped the `isCustom` requirement so it applies to every item.
+- Confirm-dialog text "Remove this custom item?" -> "Remove this item?", since it's no longer custom-only.
+- Verified against a real non-custom item seeded directly into Firestore (simulating an actual default/seeded item, not a testing artifact) -- Edit/Delete now appear and both work correctly.
+- Side effect, flagged not hidden: Permits (Step5) shares this exact component and gains the same capability automatically, even though only PPE/Tools/Materials were named in the request.
+
+**Standard tasks (Step 3, "Configure & Order Sequence of Works"):**
+- Previously create-only. New `EditTaskForm` component (mirrors `NewTaskForm`), new `handleUpdateStandardTask`/`handleDeleteStandardTask` handlers in `App.js`.
+- Edit updates `title` + the task's `options.default.description` only -- does not touch per-document task descriptions already customized in the RAMS currently being built (those are independent, user-edited text, not meant to be silently overwritten by a master-task edit).
+- Delete removes the `standardTasks` doc and also drops any now-orphaned entries from the current document's `selectedTasks` (the existing code already rendered `null` for a missing task definition rather than crashing, but left a dead array entry -- now cleaned up).
+- Found and deliberately left alone: the existing "Update Default" button on each task is a separate, seemingly incomplete pre-existing feature -- it only writes to local React state (never Firestore) and sets a `defaultDescription` field nothing else reads. Not in scope for this change.
+- Verified end-to-end against the real running app: created a task, edited it, deleted it, confirmed removal.
+
+**Rollback:** `git revert <this commit>`.
+
+---
+
 ## 2026-08-20 -- v2.0.9: Add job template editing
 
 Follow-up to v2.0.8 (template deletion) -- there was still no way to fix a typo or update a template's description without deleting and recreating it (losing the ID in the process).

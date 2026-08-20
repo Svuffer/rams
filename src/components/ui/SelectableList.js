@@ -67,8 +67,8 @@ const SelectableList = ({
             <div className="space-y-3">
                 {category.items.map(item => {
                     const isEditing = editingItemId === item.id;
-                    const canEditItem = Boolean(onEditItem && item.isCustom);
-                    const canDeleteItem = Boolean(onRemoveItem && item.isCustom);
+                    const canEditItem = Boolean(onEditItem);
+                    const canDeleteItem = Boolean(onRemoveItem);
                     return (
                         <div key={item.id} className="p-3 border rounded-md bg-white">
                             <label className="flex items-center gap-3 cursor-pointer">
@@ -88,7 +88,7 @@ const SelectableList = ({
                                     {canDeleteItem && (
                                         <button
                                             onClick={() => {
-                                                if (window.confirm('Remove this custom item?')) {
+                                                if (window.confirm('Remove this item?')) {
                                                     onRemoveItem(category.id, item.id);
                                                     if (isEditing) {
                                                         setEditingItemId(null);

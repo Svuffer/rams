@@ -31,6 +31,7 @@ import ShareView from './components/ShareView';
 import { useAuth } from './hooks/useAuth';
 import { useSavedRamsDocuments } from './hooks/useSavedRamsDocuments';
 import SavedRamsPage from './pages/SavedRamsPage';
+import AssignedRamsPage from './pages/AssignedRamsPage';
 
 const PORTAL_BASE_URL = process.env.REACT_APP_PORTAL_URL || 'http://localhost:3300';
 // [SEC 100 END]
@@ -135,6 +136,43 @@ const NewTaskForm = ({ onSave, onCancel }) => {
 };
 
 // UPDATED: This is now a simple inline form, not a modal.
+const EditTaskForm = ({ taskInfo, onSave, onCancel }) => {
+    const [title, setTitle] = useState(taskInfo?.title || '');
+    const [description, setDescription] = useState(taskInfo?.options?.default?.description || '');
+
+    const handleSave = () => {
+        if (!title || !description) {
+            alert('Please provide a title and a description for the task.');
+            return;
+        }
+        onSave({ title, description });
+    };
+
+    return (
+    <div className="mt-3 p-3 bg-teal-50 border border-teal-200 rounded-md space-y-2">
+      <h3 className="font-bold text-sm text-slate-700">Edit Standard Task</h3>
+            <input
+                type="text"
+                placeholder="Task Title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                   className="w-full p-2 border border-slate-300 rounded-md text-sm"
+            />
+            <textarea
+                placeholder="Default task description..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                   className="w-full p-2 border border-slate-300 rounded-md text-sm"
+                rows={3}
+            />
+      <div className="flex gap-2">
+        <button onClick={handleSave} className="bg-[var(--uctel-teal)] text-white font-semibold py-1 px-3 rounded-md text-sm">Save</button>
+        <button onClick={onCancel} className="bg-slate-200 text-slate-700 py-1 px-3 rounded-md text-sm">Cancel</button>
+      </div>
+        </div>
+    );
+};
+
 const NewTemplateForm = ({ onSave, onCancel, allTemplates }) => {
     const [id, setId] = useState('');
     const [name, setName] = useState('');
@@ -258,6 +296,7 @@ const AddNewOptionForm = ({ taskId, onSave, onCancel }) => {
 
 const TaskItem = ({ task, index, allTasks, handlers }) => {
     const [showNewOptionForm, setShowNewOptionForm] = useState(false);
+    const [showEditTaskForm, setShowEditTaskForm] = useState(false);
     if (!allTasks[task.taskId]) {
         return null; // or a loading/error state
     }
@@ -297,7 +336,35 @@ const TaskItem = ({ task, index, allTasks, handlers }) => {
                 <option value="--add-new--" className="font-bold text-[var(--uctel-blue)]"> + Add New Option...</option>
               </select>
             )}
+            <button
+              type="button"
+              onClick={() => setShowEditTaskForm(prev => !prev)}
+              title="Edit this standard task"
+              className="px-3 py-1 text-xs font-semibold text-[var(--uctel-blue)] bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors"
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              onClick={() => handlers.handleDeleteStandardTask(task.taskId)}
+              title="Delete this standard task"
+              className="px-3 py-1 text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors"
+            >
+              Delete
+            </button>
           </div>
+          {showEditTaskForm && (
+            <div className="pl-12">
+              <EditTaskForm
+                taskInfo={taskInfo}
+                onSave={(updates) => {
+                  handlers.handleUpdateStandardTask(task.taskId, updates);
+                  setShowEditTaskForm(false);
+                }}
+                onCancel={() => setShowEditTaskForm(false)}
+              />
+            </div>
+          )}
           {task.enabled && (
             <div className="pl-12">
                {showNewOptionForm ? (
@@ -573,11 +640,17 @@ const AppContent = () => {
       return;
     }
 
+    const assignedEngineers = (preparedForm.projectTeam || [])
+      .filter(member => member.requiresSignOff && member.email)
+      .map(member => ({ id: member.id, name: member.name || '', email: member.email }));
+
     const summary = {
       client: preparedForm.client || 'Untitled RAMS',
       projectDescription: preparedForm.projectDescription || '',
       siteAddress: preparedForm.siteAddress || '',
       preparedBy: preparedForm.preparedBy || '',
+      assignedEngineers,
+      assignedEngineerEmails: assignedEngineers.map(e => e.email),
     };
 
     setIsSavingDocument(true);
@@ -603,6 +676,7 @@ const AppContent = () => {
           ...summary,
           formData: preparedForm,
           shareCode,
+          acceptances: {},
           ownerUid: currentUser.uid,
           ownerEmail: currentUser.email || null,
           ownerName: currentUser.displayName || preparedForm.preparedBy || null,
@@ -984,6 +1058,61 @@ useEffect(() => {
     } catch (error) {
       console.error("Error creating new task:", error);
       alert("Failed to create new task. Please check the console for details.");
+    }
+  };
+
+  const handleUpdateStandardTask = async (taskId, { title, description }) => {
+    if (!taskId || !allTasks[taskId]) {
+      return;
+    }
+    const currentTask = allTasks[taskId];
+    const updatedOptions = {
+      ...currentTask.options,
+      default: {
+        ...(currentTask.options?.default || {}),
+        name: currentTask.options?.default?.name || 'Default',
+        description,
+      },
+    };
+
+    try {
+      await setDoc(doc(db, 'standardTasks', taskId), { title, options: updatedOptions }, { merge: true });
+
+      setAllTasks(prev => ({ ...prev, [taskId]: { ...prev[taskId], title, options: updatedOptions } }));
+
+      setFormData(prev => ({
+        ...prev,
+        selectedTasks: prev.selectedTasks.map(t => t.taskId === taskId ? { ...t, taskTitle: title } : t),
+      }));
+    } catch (error) {
+      console.error("Error updating standard task:", error);
+      alert("Failed to update task. Please check the console for details.");
+    }
+  };
+
+  const handleDeleteStandardTask = async (taskId) => {
+    if (!taskId || !allTasks[taskId]) {
+      return;
+    }
+    const taskTitle = allTasks[taskId].title || taskId;
+    if (!window.confirm(`Permanently delete the standard task "${taskTitle}"? This cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await deleteDoc(doc(db, 'standardTasks', taskId));
+
+      const remainingTasks = { ...allTasks };
+      delete remainingTasks[taskId];
+      setAllTasks(remainingTasks);
+
+      setFormData(prev => ({
+        ...prev,
+        selectedTasks: prev.selectedTasks.filter(t => t.taskId !== taskId),
+      }));
+    } catch (error) {
+      console.error("Error deleting standard task:", error);
+      alert("Failed to delete task. Please check the console for details.");
     }
   };
 
@@ -1397,9 +1526,17 @@ useEffect(() => {
     }
   }, [formData]);
 
+  const handleToggleEngineerSignoff = useCallback((index) => {
+    setFormData(prev => {
+      const updatedTeam = [...prev.projectTeam];
+      updatedTeam[index] = { ...updatedTeam[index], requiresSignOff: !updatedTeam[index].requiresSignOff };
+      return { ...prev, projectTeam: updatedTeam };
+    });
+  }, []);
+
   const addTeamMember = async () => {
     const newId = Date.now().toString();
-    const newMember = { id: newId, name: '', role: '', phone: '', competencies: '' };
+    const newMember = { id: newId, name: '', role: '', phone: '', email: '', competencies: '' };
     try {
       await setDoc(doc(db, 'teamMembers', newId), newMember);
       setDbTeamMembers(prev => [...prev, newMember]);
@@ -1688,7 +1825,7 @@ useEffect(() => {
           onSignatureImageRemove={handleSignatureImageRemove}
         />
       );
-      case 2: return <Step2 data={formData} onChange={handleProjectTeamChange} onAdd={addTeamMember} onRemove={removeTeamMember} dbTeamMembers={dbTeamMembers} onSelectMember={handleSelectTeamMember} />;
+      case 2: return <Step2 data={formData} onChange={handleProjectTeamChange} onAdd={addTeamMember} onRemove={removeTeamMember} dbTeamMembers={dbTeamMembers} onSelectMember={handleSelectTeamMember} onToggleSignoff={handleToggleEngineerSignoff} />;
      case 3: return <Step3 
           data={formData} 
           allTasks={allTasks} 
@@ -1704,6 +1841,8 @@ useEffect(() => {
             handleDeleteTemplate,
             handleUpdateTemplate,
             handleCreateAndAddTask, // Add this
+            handleUpdateStandardTask,
+            handleDeleteStandardTask,
             setShowNewTemplateForm,
             setShowEditTemplateForm,
             setShowNewTaskForm,     // Add this
@@ -1791,6 +1930,12 @@ useEffect(() => {
                 Manage Saved RAMS
               </button>
               <button
+                onClick={() => navigate('/assigned')}
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-[var(--uctel-blue)] hover:text-[var(--uctel-blue)] focus:outline-none focus:ring-2 focus:ring-[var(--uctel-blue)]"
+              >
+                Assigned RAMS
+              </button>
+              <button
                 onClick={handleSaveDocument}
                 disabled={isSavingDocument || !formData || !currentUser}
                 className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition focus:outline-none focus:ring-2 focus:ring-[var(--uctel-blue)] ${isSavingDocument || !formData || !currentUser ? 'bg-slate-200 text-slate-500 cursor-not-allowed' : 'bg-[var(--uctel-blue)] text-white hover:bg-opacity-90'}`}
@@ -1875,6 +2020,7 @@ const App = () => (
     <Routes>
       <Route path="/" element={<AppContent />} />
       <Route path="/saved" element={<SavedRamsPage />} />
+      <Route path="/assigned" element={<AssignedRamsPage />} />
       <Route path="/share/:shareCode" element={<ShareView />} />
       {/* The /preview route is no longer needed */}
       {/* <Route path="/preview" element={<PreviewPage />} /> */}

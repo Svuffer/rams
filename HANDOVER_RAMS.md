@@ -159,8 +159,6 @@ To test locally without the developer's real UCtel Portal / Firebase secrets, a 
 - [ ] Remove hardcoded default form values (client name, site address) in `App.js:603–647`
 - [ ] Implement session token refresh (Firebase token expires in 1h; portal cookie lasts 5h)
 - [ ] Add share link expiry or access log
-- [ ] Link Vercel project and configure environment variables
-- [ ] Deploy to Vercel (`npx vercel --prod`)
 
 ---
 

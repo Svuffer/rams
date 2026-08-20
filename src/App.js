@@ -344,6 +344,16 @@ const Step3 = ({ data, allTasks, allTemplates, handlers, showNewTemplateForm, sh
                             ))}
               <option value="--add-new--" className="font-bold text-[var(--uctel-blue)]"> + Add New Template...</option>
                         </select>
+            {data.jobTemplate && data.jobTemplate !== '--add-new--' && allTemplates[data.jobTemplate] && (
+              <button
+                type="button"
+                onClick={() => handlers.handleDeleteTemplate(data.jobTemplate)}
+                title="Delete the selected template"
+                className="px-4 py-2 text-sm font-semibold text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+              >
+                Delete Template
+              </button>
+            )}
                     </div>
                     {showNewTemplateForm && (
                         <NewTemplateForm 
@@ -937,6 +947,37 @@ useEffect(() => {
     } catch (error) {
         console.error("Error creating new template:", error);
         alert("Failed to create new template. Please check the console for details.");
+    }
+  };
+
+  const handleDeleteTemplate = async (templateKey) => {
+    if (!templateKey || !allTemplates[templateKey]) {
+      return;
+    }
+    const templateName = allTemplates[templateKey].name || templateKey;
+    if (!window.confirm(`Permanently delete the template "${templateName}"? This cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await deleteDoc(doc(db, 'jobTemplates', templateKey));
+
+      const remainingTemplates = { ...allTemplates };
+      delete remainingTemplates[templateKey];
+      setAllTemplates(remainingTemplates);
+
+      if (formData.jobTemplate === templateKey) {
+        const nextKey = Object.keys(remainingTemplates)[0] || '';
+        setFormData(prev => ({
+          ...prev,
+          jobTemplate: nextKey,
+          projectDescription: remainingTemplates[nextKey]?.description || '',
+          selectedTasks: nextKey ? buildSelectedTasks(nextKey, remainingTemplates, allTasks) : [],
+        }));
+      }
+    } catch (error) {
+      console.error("Error deleting template:", error);
+      alert("Failed to delete template. Please check the console for details.");
     }
   };
 
@@ -1570,6 +1611,7 @@ useEffect(() => {
             handleOnDragEnd, 
             handleAddNewOption, 
             handleCreateTemplate,
+            handleDeleteTemplate,
             handleCreateAndAddTask, // Add this
             setShowNewTemplateForm,
             setShowNewTaskForm,     // Add this

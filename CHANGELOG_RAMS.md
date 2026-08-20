@@ -4,6 +4,18 @@ All entries newest-first. Every entry includes a **Rollback** line.
 
 ---
 
+## 2026-08-20 -- v2.0.8: Add job template deletion
+
+Change request: "there is currently no straightforward way for the user to remove templates that are obsolete, duplicated, incorrectly created or no longer required... increases the possibility of an inappropriate or outdated template being selected."
+
+- `src/App.js`: new `handleDeleteTemplate(templateKey)` -- deletes the Firestore `jobTemplates/{id}` doc, updates local `allTemplates` state, and if the deleted template was the currently active selection, falls back to the next remaining template (blank if none left) so the form never points at a deleted key
+- Step 3's template dropdown gets a "Delete Template" button next to it, only rendered when a real template (not the empty state or the `--add-new--` sentinel) is selected -- guarded by a `window.confirm` naming the template, since this is a permanent delete unlike this codebase's other list-item removals which don't confirm
+- Verified end-to-end against the real running app (not just a build check): created a test template through the existing "+ Add New Template..." flow, deleted it via the new button, handled the real confirm dialog, confirmed it's gone from both the dropdown and Firestore
+
+**Rollback:** `git revert <this commit>`.
+
+---
+
 ## 2026-08-20 -- Blank Step 1 (Project Details) fields by default
 
 Change request: "RAMS must be specific to the individual site and project. Pre-populated or default project information creates a risk that details from a previous or generic project could be carried into a new RAMS document without being properly reviewed."

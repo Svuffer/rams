@@ -1,4 +1,4 @@
-# RAMS Generator v2.0.6
+# RAMS Generator v2.0.7
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 

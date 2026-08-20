@@ -1,3 +1,0 @@
-#!/bin/sh
-node scripts/sync-version.js --next
-git add package.json src/version.js

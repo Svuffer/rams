@@ -4,6 +4,33 @@ All entries newest-first. Every entry includes a **Rollback** line.
 
 ---
 
+## 2026-08-20 -- Blank Step 1 (Project Details) fields by default
+
+Change request: "RAMS must be specific to the individual site and project. Pre-populated or default project information creates a risk that details from a previous or generic project could be carried into a new RAMS document without being properly reviewed."
+
+Every new document previously defaulted to a fixed fake project: client "iQ Student Accommodation", site "120 Longwood Close, Coventry", dated September 2025, prepared by "James Smith" with a specific hardcoded email/phone -- all silently carried into every new RAMS unless manually cleared first.
+
+- `src/App.js`: `client`, `siteAddress`, `commencementDate`, `estimatedCompletionDate`, `preparedBy`, `preparedByEmail`, `preparedByPhone` now default to `''` instead of hardcoded values
+- Deliberately left unchanged: `hoursOfWork` (generic 08:00-17:00 default, not project-identifying), `documentCreationDate` (already dynamic, defaults to today), `revisionNumber` (sensible default of `'1'`)
+- **Related but out of scope:** Step 2's default `projectTeam` entry still hardcodes "James Smith, Project Coordinator" -- same underlying issue, a different step, not touched by this change
+
+**Rollback:** `git revert <this commit>` restores the hardcoded defaults.
+
+---
+
+## 2026-08-20 -- Tighten Firestore security rules
+
+`firestore.rules` was `allow read, write: if true` for every collection -- anyone who inspected the public Firebase client config (visible by design in the committed JS bundle) could read, write, or delete any RAMS document or reference list directly, completely bypassing UCtel Portal login.
+
+- Changed to `allow read, write: if request.auth != null` -- every legitimate client write already happens after portal login -> Firebase custom token -> `signInWithCustomToken()`, so this has zero functional impact on real usage
+- Confirmed the public share page (`ShareView.js`) never touches Firestore directly -- it fetches via `api/get-rams-share.js`, which uses the Admin SDK server-side and bypasses security rules entirely, so it's unaffected either way
+- Verified against a real Firestore rules emulator (`@firebase/rules-unit-testing`, installed temporarily with `--no-save`, not committed to `package.json`): unauthenticated read/write correctly blocked (`PERMISSION_DENIED`), authenticated read/write correctly allowed, tested against both `ramsDocuments` and a reference collection (`standardTasks`)
+- **Not yet deployed to the real `rams-generator-bdcb7` Firebase project** -- this session only has credentials for the throwaway `uctel-projects-sandbox` project used for local testing. Someone with console/CLI access to `rams-generator-bdcb7` needs to run `firebase deploy --only firestore:rules` (or grant access so it can be run directly). The rule change sitting in git does nothing on its own until that deploy happens.
+
+**Rollback:** `git revert <this commit>` restores `if true` -- only do this if the tightened rule breaks something unexpected; re-check against the emulator test above first, since the change was verified to have zero functional impact on documented usage.
+
+---
+
 ## 2026-08-20 -- v2.0.6: Remove auto-versioning (shallow-clone bug), first production deploy
 
 The app went live at https://rams-six.vercel.app this session (via PR #2 -> `dj-iv/rams:main`, commit `90d66ec`). Once live, the footer showed `v0.0.18` instead of the real version -- traced to `scripts/sync-version.js` computing version as `0.0.{git rev-list --count HEAD}`, which is accurate in a full local clone but silently wrong under Vercel's shallow git checkout (confirmed: true count from a full clone was 52, Vercel's shallow clone only saw enough history to compute 18). The command doesn't fail in a shallow clone, it just returns incomplete data, so the earlier "keep existing version if git is unavailable" safety net never triggered.

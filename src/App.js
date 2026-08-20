@@ -630,21 +630,21 @@ useEffect(() => {
      // This prevents the app from getting stuck on the loading screen.
      if (!isLoading && !formData) {
       const initialTemplateKey = 'G43';
-      const initialPreparedBy = 'James Smith';
+      const initialPreparedBy = '';
       const initialDocumentDate = new Date().toISOString().slice(0, 10);
       const initialFormState = {
-          client: 'iQ Student Accommodation',
-          siteAddress: '120 Longwood Close, Coventry',
+          client: '',
+          siteAddress: '',
           projectDescription: allTemplates[initialTemplateKey]?.description || '',
-          commencementDate: '2025-09-01',
-          estimatedCompletionDate: '2025-09-05',
+          commencementDate: '',
+          estimatedCompletionDate: '',
           hoursOfWork: {
             startTime: '08:00',
             endTime: '17:00'
           },
           preparedBy: initialPreparedBy,
-          preparedByEmail: 'james.smith@uctel.co.uk',
-          preparedByPhone: '+44 7730 890403',
+          preparedByEmail: '',
+          preparedByPhone: '',
           documentCreationDate: initialDocumentDate,
           revisionNumber: '1',
           projectTeam: [ { id: '1', name: 'James Smith', role: 'Project Coordinator', phone: '+44 7730 890403', competencies: 'First Aid, Working at Height'} ],

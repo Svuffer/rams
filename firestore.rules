@@ -2,39 +2,20 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow read and write access to all documents in all collections
-    // This is appropriate for a single-user application like the RAMS generator
-    // where the app is used internally and doesn't require user authentication
-    
+    // All writes in this app happen after portal login -> Firebase custom
+    // token -> signInWithCustomToken() (see api/session.js), so every
+    // legitimate client request already carries request.auth. The public
+    // share page (/share/:shareCode) never touches Firestore directly --
+    // it reads via api/get-rams-share.js using the Admin SDK server-side,
+    // which bypasses these rules entirely, so requiring auth here has no
+    // effect on it.
+    //
+    // Previously `if true` -- anyone who inspected the public Firebase
+    // client config (visible by design in the JS bundle) could read,
+    // write, or delete any document directly, bypassing portal login
+    // entirely.
     match /{document=**} {
-      allow read, write: if true;
-    }
-    
-    // More specific rules if you want to be more granular:
-    
-    // Standard tasks collection - allow all operations
-    match /standardTasks/{taskId} {
-      allow read, write: if true;
-    }
-    
-    // Job templates collection - allow all operations
-    match /jobTemplates/{templateId} {
-      allow read, write: if true;
-    }
-    
-    // Risk assessments collection - allow all operations
-    match /riskAssessments/{riskId} {
-      allow read, write: if true;
-    }
-    
-    // Team members collection - allow all operations
-    match /teamMembers/{memberId} {
-      allow read, write: if true;
-    }
-    
-    // PPE, Tools, Materials, Permits collections - allow all operations
-    match /{collection}/{itemId} {
-      allow read, write: if collection in ['ppe', 'tools', 'materials', 'permits'];
+      allow read, write: if request.auth != null;
     }
   }
 }

@@ -1,3 +1,9 @@
+// Section map -- grep "[SEC NNN]" to jump to any section; numbers are stable even as line numbers drift.
+// SEC 100  Imports & category sub-components   BooleanWithTextCategory · TextAreaCategory · AddNewCategoryForm
+// SEC 200  Step5 component                     state init · edit helpers · renderCategoryEditForm · renderHeaderActions
+// SEC 300  JSX render                          category list (switch on type) · add category footer
+
+// [SEC 100] Imports & category sub-components
 import React, { useState } from 'react';
 import SelectableList from '../ui/SelectableList';
 import { TextArea } from '../ui/FormControls';
@@ -78,8 +84,9 @@ const AddNewCategoryForm = ({ onSave, onCancel }) => {
         </div>
     );
 };
+// [SEC 100 END]
 
-
+// [SEC 200] Step5 component
 const Step5 = ({ data, handlers }) => {
     const [showNewCategoryForm, setShowNewCategoryForm] = useState(false);
     const [categoryEditState, setCategoryEditState] = useState(null);
@@ -159,7 +166,9 @@ const Step5 = ({ data, handlers }) => {
             </button>
         </div>
     );
+// [SEC 200 END]
 
+// [SEC 300] JSX render
     return (
         <div>
             <h2 className="text-2xl font-bold text-[var(--uctel-blue)] border-b-2 border-[var(--uctel-orange)] pb-2 mb-6">Step 5: Safety & Logistics</h2>
@@ -237,3 +246,4 @@ const Step5 = ({ data, handlers }) => {
 };
 
 export default Step5;
+// [SEC 300 END]

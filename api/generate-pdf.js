@@ -1,3 +1,10 @@
+// Section map -- grep "[SEC NNN]" to jump to any section; numbers are stable even as line numbers drift.
+// SEC 100  Imports & entry        node-fetch · handler entry point · method check · API key check
+// SEC 200  Image inlining         regex replace img src → base64 data URIs from filesystem
+// SEC 300  HTML wrapping          font embedding · wrappedHtml construction with print CSS
+// SEC 400  PDFlayer API call      POST to pdflayer · response streaming
+
+// [SEC 100] Imports & entry
 // Use node-fetch for server-side HTTP calls
 const fetch = require('node-fetch');
 
@@ -13,8 +20,10 @@ module.exports = async (req, res) => {
     console.error('Server Error: PDFLAYER_KEY is not set in environment variables.');
     return res.status(500).send('Server configuration error: PDF provider key is missing.');
   }
+// [SEC 100 END]
 
   try {
+// [SEC 200] Image inlining
     // 3. Get the HTML from the request body
     let { html } = req.body;
     if (!html) {
@@ -91,6 +100,9 @@ module.exports = async (req, res) => {
 
     // If the project provides local fonts under public/fonts, embed them as data: URIs so pdflayer renders deterministically
     let embeddedFontCss = '';
+// [SEC 200 END]
+
+// [SEC 300] HTML wrapping
     try {
       const fontDir = path.join(process.cwd(), 'public', 'fonts');
       if (fs.existsSync(fontDir)) {
@@ -207,7 +219,9 @@ module.exports = async (req, res) => {
 </head>
 <body>${html}</body>
 </html>`;
+// [SEC 300 END]
 
+// [SEC 400] PDFlayer API call
     // 4. Construct the request to the pdflayer API
     const pdflayerUrl = `https://api.pdflayer.com/api/convert?access_key=${apiKey}`;
     
@@ -254,3 +268,4 @@ module.exports = async (req, res) => {
     return res.status(500).send('An unexpected error occurred during PDF generation.');
   }
 };
+// [SEC 400 END]

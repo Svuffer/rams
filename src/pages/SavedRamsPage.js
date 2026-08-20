@@ -1,3 +1,10 @@
+// Section map -- grep "[SEC NNN]" to jump to any section; numbers are stable even as line numbers drift.
+// SEC 100  Imports, helpers & state init   formatDateTime · buildShareLink · hooks · state
+// SEC 200  Action handlers                 handleCopyLink · handleDelete · handleContinueEditing
+// SEC 300  renderContent                   auth check · loading · empty state · documents table
+// SEC 400  Main JSX return                 page shell · warnings · feedback · export
+
+// [SEC 100] Imports, helpers & state init
 import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -48,7 +55,9 @@ const SavedRamsPage = () => {
     setFeedback('');
     setErrorMessage('');
   };
+// [SEC 100 END]
 
+// [SEC 200] Action handlers
   const handleCopyLink = useCallback((shareCode) => {
     clearMessages();
     if (!shareCode) {
@@ -108,7 +117,9 @@ const SavedRamsPage = () => {
     clearMessages();
     navigate('/', { state: { loadDocumentId: documentId } });
   }, [navigate]);
+// [SEC 200 END]
 
+// [SEC 300] renderContent
   const renderContent = () => {
     if (authLoading) {
       return <div className="py-16 text-center text-slate-500">Checking your UCtel session…</div>;
@@ -243,7 +254,9 @@ const SavedRamsPage = () => {
       </div>
     );
   };
+// [SEC 300 END]
 
+// [SEC 400] Main JSX return
   return (
     <div className="min-h-screen bg-slate-100" style={{ '--uctel-orange': '#d88e43', '--uctel-teal': '#008080', '--uctel-blue': '#2c4f6b' }}>
       <div className="container mx-auto px-4 py-8 md:px-8">
@@ -285,3 +298,4 @@ const SavedRamsPage = () => {
 };
 
 export default SavedRamsPage;
+// [SEC 400 END]

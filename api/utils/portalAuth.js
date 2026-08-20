@@ -1,3 +1,11 @@
+// Section map -- grep "[SEC NNN]" to jump to any section; numbers are stable even as line numbers drift.
+// SEC 100  Imports & constants        crypto · SESSION_COOKIE · SESSION_DURATION_SECONDS · getPortalBaseUrl · getSecret
+// SEC 200  Token verification         verifyPortalToken (HMAC-SHA256 validate + payload decode)
+// SEC 300  Cookie management          encodeSessionValue · decodeSessionCookie · createSessionCookie · serializeCookie · parseCookies
+// SEC 400  URL builders               sanitizeRedirect · buildPortalLoginUrl · buildPortalLaunchUrl · buildPortalLogoutUrl
+// SEC 500  Request origin & exports   resolveProto · getRequestOrigin · module.exports
+
+// [SEC 100] Imports & constants
 const crypto = require('crypto')
 const { Buffer } = require('node:buffer')
 
@@ -18,7 +26,9 @@ function getSecret() {
   }
   return secret
 }
+// [SEC 100 END]
 
+// [SEC 200] Token verification
 function verifyPortalToken(token) {
   if (!token || typeof token !== 'string') {
     return null
@@ -60,7 +70,9 @@ function verifyPortalToken(token) {
     return null
   }
 }
+// [SEC 200 END]
 
+// [SEC 300] Cookie management
 function encodeSessionValue(value) {
   const payload = typeof value === 'string'
     ? { uid: value, email: null, displayName: null }
@@ -163,7 +175,9 @@ function parseCookies(header = '') {
       return acc
     }, {})
 }
+// [SEC 300 END]
 
+// [SEC 400] URL builders
 function sanitizeRedirect(target, origin) {
   if (!target) {
     return '/'
@@ -209,7 +223,9 @@ function buildPortalLogoutUrl(redirect) {
   url.searchParams.set('logout', '1')
   return url.toString()
 }
+// [SEC 400 END]
 
+// [SEC 500] Request origin & exports
 function resolveProto(req) {
   const protoHeader = req.headers['x-forwarded-proto']
   if (protoHeader) {
@@ -247,3 +263,4 @@ module.exports = {
   getRequestOrigin,
   getPortalBaseUrl,
 }
+// [SEC 500 END]

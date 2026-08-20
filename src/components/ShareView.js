@@ -1,3 +1,10 @@
+// Section map -- grep "[SEC NNN]" to jump to any section; numbers are stable even as line numbers drift.
+// SEC 100  Imports & state init    React hooks, React Router, PrintableDocument
+// SEC 200  Data fetching           useEffect fetchDocument · inlineImages helper
+// SEC 300  PDF generation          handleDownloadPdf · taskLookup memo
+// SEC 400  JSX render              loading/error states · main return · formatDate · export
+
+// [SEC 100] Imports & state init
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import PrintableDocument from './PrintableDocument';
@@ -9,7 +16,9 @@ const ShareView = () => {
   const [payload, setPayload] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const printableRef = useRef(null);
+// [SEC 100 END]
 
+// [SEC 200] Data fetching
   useEffect(() => {
     let cancelled = false;
     const fetchDocument = async () => {
@@ -55,7 +64,9 @@ const ShareView = () => {
       cancelled = true;
     };
   }, [shareCode]);
+// [SEC 200 END]
 
+// [SEC 300] PDF generation
   const inlineImages = useCallback(async (container) => {
     const images = Array.from(container.querySelectorAll('img'));
     await Promise.all(
@@ -136,7 +147,9 @@ const ShareView = () => {
       setIsGenerating(false);
     }
   }, [inlineImages, payload]);
+// [SEC 300 END]
 
+// [SEC 400] JSX render
   const taskLookup = useMemo(() => {
     if (!payload?.formData?.selectedTasks) {
       return {};
@@ -237,3 +250,4 @@ const formatDate = (value) => {
 };
 
 export default ShareView;
+// [SEC 400 END]

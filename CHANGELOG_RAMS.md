@@ -4,6 +4,32 @@ All entries newest-first. Every entry includes a **Rollback** line.
 
 ---
 
+## 2026-08-20 -- v2.0.9: Add job template editing
+
+Follow-up to v2.0.8 (template deletion) -- there was still no way to fix a typo or update a template's description without deleting and recreating it (losing the ID in the process).
+
+- `src/App.js`: new `EditTemplateForm` component (mirrors `NewTemplateForm`'s style) -- pre-fills name/description, shows the ID read-only (it's the Firestore doc key, not user-facing; renaming is out of scope)
+- New `handleUpdateTemplate(id, { name, description })` -- `setDoc` with `merge: true` (preserves `taskIds`), updates local state, syncs `formData.projectDescription` if the edited template is the active selection
+- "Edit Template" button added next to "Delete Template" (same visibility guard: real template selected, not the empty/`--add-new--` state)
+- Switching templates or deleting one now also closes the edit form if it was open, so it can't show stale data for a template that's no longer selected/no longer exists
+- Verified end-to-end against the real running app: created a template, edited its name and description, confirmed the dropdown reflected the new name and the form closed on save, then cleaned up via delete
+
+**Rollback:** `git revert <this commit>`.
+
+---
+
+## 2026-08-20 -- v2.0.8: Add job template deletion
+
+Change request: "there is currently no straightforward way for the user to remove templates that are obsolete, duplicated, incorrectly created or no longer required... increases the possibility of an inappropriate or outdated template being selected."
+
+- `src/App.js`: new `handleDeleteTemplate(templateKey)` -- deletes the Firestore `jobTemplates/{id}` doc, updates local `allTemplates` state, and if the deleted template was the currently active selection, falls back to the next remaining template (blank if none left) so the form never points at a deleted key
+- Step 3's template dropdown gets a "Delete Template" button next to it, only rendered when a real template (not the empty state or the `--add-new--` sentinel) is selected -- guarded by a `window.confirm` naming the template, since this is a permanent delete unlike this codebase's other list-item removals which don't confirm
+- Verified end-to-end against the real running app (not just a build check): created a test template through the existing "+ Add New Template..." flow, deleted it via the new button, handled the real confirm dialog, confirmed it's gone from both the dropdown and Firestore
+
+**Rollback:** `git revert <this commit>`.
+
+---
+
 ## 2026-08-20 -- Blank Step 1 (Project Details) fields by default
 
 Change request: "RAMS must be specific to the individual site and project. Pre-populated or default project information creates a risk that details from a previous or generic project could be carried into a new RAMS document without being properly reviewed."

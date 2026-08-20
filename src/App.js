@@ -187,6 +187,50 @@ const NewTemplateForm = ({ onSave, onCancel, allTemplates }) => {
     );
 };
 
+const EditTemplateForm = ({ templateId, template, onSave, onCancel }) => {
+    const [name, setName] = useState(template?.name || '');
+    const [description, setDescription] = useState(template?.description || '');
+
+    const handleSave = () => {
+        if (!name || !description) {
+            alert('Please provide a Template Name and Description.');
+            return;
+        }
+        onSave(templateId, { name, description });
+    };
+
+    return (
+    <div className="mt-3 p-3 bg-teal-50 border border-teal-200 rounded-md space-y-2">
+      <h3 className="font-bold text-sm text-slate-700">Edit Template</h3>
+            <input
+                type="text"
+                value={templateId}
+                disabled
+                title="Template ID cannot be changed"
+        className="w-full p-2 border border-slate-200 rounded-md text-sm bg-slate-100 text-slate-500"
+            />
+            <input
+                type="text"
+                placeholder="Template Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+        className="w-full p-2 border border-slate-300 rounded-md text-sm"
+            />
+      <textarea
+                placeholder="Template Description..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+        className="w-full p-2 border border-slate-300 rounded-md text-sm"
+                rows={3}
+            />
+            <div className="flex gap-2">
+        <button onClick={handleSave} className="bg-[var(--uctel-teal)] text-white font-semibold py-1 px-3 rounded-md text-sm">Save</button>
+        <button onClick={onCancel} className="bg-slate-200 text-slate-700 py-1 px-3 rounded-md text-sm">Cancel</button>
+            </div>
+        </div>
+    );
+};
+
 const AddNewOptionForm = ({ taskId, onSave, onCancel }) => {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
@@ -330,7 +374,7 @@ const TaskItem = ({ task, index, allTasks, handlers }) => {
     );
 };
 
-const Step3 = ({ data, allTasks, allTemplates, handlers, showNewTemplateForm, showNewTaskForm }) => {    
+const Step3 = ({ data, allTasks, allTemplates, handlers, showNewTemplateForm, showEditTemplateForm, showNewTaskForm }) => {
     return (
         <div>
       <h2 className="text-2xl font-bold text-[var(--uctel-blue)] border-b-2 border-[var(--uctel-orange)] pb-2 mb-6">Step 3: Build Method Statement</h2>
@@ -344,12 +388,40 @@ const Step3 = ({ data, allTasks, allTemplates, handlers, showNewTemplateForm, sh
                             ))}
               <option value="--add-new--" className="font-bold text-[var(--uctel-blue)]"> + Add New Template...</option>
                         </select>
+            {data.jobTemplate && data.jobTemplate !== '--add-new--' && allTemplates[data.jobTemplate] && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => handlers.setShowEditTemplateForm(true)}
+                  title="Edit the selected template"
+                  className="px-4 py-2 text-sm font-semibold text-[var(--uctel-blue)] bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+                >
+                  Edit Template
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handlers.handleDeleteTemplate(data.jobTemplate)}
+                  title="Delete the selected template"
+                  className="px-4 py-2 text-sm font-semibold text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                >
+                  Delete Template
+                </button>
+              </>
+            )}
                     </div>
                     {showNewTemplateForm && (
-                        <NewTemplateForm 
+                        <NewTemplateForm
                             onSave={handlers.handleCreateTemplate}
                             onCancel={() => handlers.setShowNewTemplateForm(false)}
                             allTemplates={allTemplates}
+                        />
+                    )}
+                    {showEditTemplateForm && allTemplates[data.jobTemplate] && (
+                        <EditTemplateForm
+                            templateId={data.jobTemplate}
+                            template={allTemplates[data.jobTemplate]}
+                            onSave={handlers.handleUpdateTemplate}
+                            onCancel={() => handlers.setShowEditTemplateForm(false)}
                         />
                     )}
                 </div>
@@ -411,6 +483,7 @@ const AppContent = () => {
   const [allRisks, setAllRisks] = useState({});
   const [showNewTaskForm, setShowNewTaskForm] = useState(false);
   const [showNewTemplateForm, setShowNewTemplateForm] = useState(false);
+  const [showEditTemplateForm, setShowEditTemplateForm] = useState(false);
   const [step, setStep] = useState(1);
   const [addingHazardTo, setAddingHazardTo] = useState(null); // State to track which risk category is getting a new hazard
   const [showNewRiskCategoryForm, setShowNewRiskCategoryForm] = useState(false);
@@ -940,16 +1013,74 @@ useEffect(() => {
     }
   };
 
+  const handleDeleteTemplate = async (templateKey) => {
+    if (!templateKey || !allTemplates[templateKey]) {
+      return;
+    }
+    const templateName = allTemplates[templateKey].name || templateKey;
+    if (!window.confirm(`Permanently delete the template "${templateName}"? This cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await deleteDoc(doc(db, 'jobTemplates', templateKey));
+
+      const remainingTemplates = { ...allTemplates };
+      delete remainingTemplates[templateKey];
+      setAllTemplates(remainingTemplates);
+      setShowEditTemplateForm(false);
+
+      if (formData.jobTemplate === templateKey) {
+        const nextKey = Object.keys(remainingTemplates)[0] || '';
+        setFormData(prev => ({
+          ...prev,
+          jobTemplate: nextKey,
+          projectDescription: remainingTemplates[nextKey]?.description || '',
+          selectedTasks: nextKey ? buildSelectedTasks(nextKey, remainingTemplates, allTasks) : [],
+        }));
+      }
+    } catch (error) {
+      console.error("Error deleting template:", error);
+      alert("Failed to delete template. Please check the console for details.");
+    }
+  };
+
+  const handleUpdateTemplate = async (templateId, { name, description }) => {
+    if (!templateId || !allTemplates[templateId]) {
+      return;
+    }
+
+    try {
+      await setDoc(doc(db, 'jobTemplates', templateId), { name, description }, { merge: true });
+
+      setAllTemplates(prev => ({
+        ...prev,
+        [templateId]: { ...prev[templateId], name, description },
+      }));
+
+      if (formData.jobTemplate === templateId) {
+        setFormData(prev => ({ ...prev, projectDescription: description }));
+      }
+
+      setShowEditTemplateForm(false);
+    } catch (error) {
+      console.error("Error updating template:", error);
+      alert("Failed to update template. Please check the console for details.");
+    }
+  };
+
   const handleTemplateChange = (e) => {
     const templateKey = e.target.value;
     
     if (templateKey === '--add-new--') {
         setShowNewTemplateForm(true); // Show the inline form
+        setShowEditTemplateForm(false);
         return;
     }
 
-    // If a different template is chosen, hide the form. 
-    setShowNewTemplateForm(false); 
+    // If a different template is chosen, hide the forms.
+    setShowNewTemplateForm(false);
+    setShowEditTemplateForm(false);
 
     if (allTemplates[templateKey]) {
       setFormData(prev => ({
@@ -1570,14 +1701,18 @@ useEffect(() => {
             handleOnDragEnd, 
             handleAddNewOption, 
             handleCreateTemplate,
+            handleDeleteTemplate,
+            handleUpdateTemplate,
             handleCreateAndAddTask, // Add this
             setShowNewTemplateForm,
+            setShowEditTemplateForm,
             setShowNewTaskForm,     // Add this
             handleTaskImageUpload,
             handleTaskImageRemove,
             handleUpdateTaskDefault
           }}
           showNewTemplateForm={showNewTemplateForm}
+          showEditTemplateForm={showEditTemplateForm}
           showNewTaskForm={showNewTaskForm} // And pass this state
         />;
       case 4: return <Step4 

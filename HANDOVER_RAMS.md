@@ -158,6 +158,8 @@ To test locally without the developer's real UCtel Portal / Firebase secrets, a 
 - [ ] Add React Error Boundary around `<AppContent>`
 - [ ] Extract Step 3 from `App.js` into `src/components/steps/Step3.js`
 - [ ] Implement session token refresh (Firebase token expires in 1h; portal cookie lasts 5h)
+- [x] **Add template deletion** (2026-08-20, v2.0.8) — Step 3's job template dropdown had no way to remove obsolete/duplicate templates, only add new ones. Added a "Delete Template" button next to the dropdown (only shown when a real template, not the empty/`--add-new--` state, is selected), guarded by a confirm dialog. If the deleted template was the active selection, falls back to the next remaining template (or blank if none left). Verified end-to-end against the running app: created a real template through the existing UI flow, deleted it, confirmed it's gone from the dropdown and Firestore.
+- [x] **Add template editing** (2026-08-20, v2.0.9) — previously templates could only be created or (as of v2.0.8) deleted, no way to fix a typo or update a description without delete-and-recreate. Added an "Edit Template" button next to "Delete Template" (same visibility guard), opens a form pre-filled with the current name/description; the ID stays read-only (it's the Firestore doc key, not user-facing — renaming would mean create-new+delete-old, out of scope). Verified end-to-end against the running app: created a template, edited its name/description, confirmed the change reflected in the dropdown and the edit form closed, then cleaned up via delete.
 - [ ] Add share link expiry or access log
 
 ---

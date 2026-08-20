@@ -1,7 +1,7 @@
 # HANDOVER — RAMS Generator
 
-**Version:** `package.json` `version` field — plain hand-bumped semver, currently `2.0.6`. No longer auto-derived from git commit count (that mechanism was removed 2026-08-20 — it silently produced wrong numbers under Vercel's shallow git clone; see §Current State).
-**Status:** **Live in production** at https://rams-six.vercel.app (deployed 2026-08-20). Local dev environment working end-to-end against a dedicated sandbox Firebase project (see §Local Testing).
+**Version:** `package.json` `version` field — plain hand-bumped semver, currently `2.2.0`. No longer auto-derived from git commit count (that mechanism was removed 2026-08-20 — it silently produced wrong numbers under Vercel's shallow git clone; see §Current State).
+**Status:** **Live in production** at https://rams-six.vercel.app (deployed 2026-08-20). Local dev environment working end-to-end against a dedicated sandbox Firebase project (see §Local Testing). **⚠ Suspected real data loss in the production Firestore project (`rams-generator-bdcb7`) discovered 2026-08-20, root cause not yet found — see §Current State and the top of §Outstanding before doing anything else with this project.**
 **Last updated:** 2026-08-20
 
 ---
@@ -127,6 +127,24 @@ To test locally without the developer's real UCtel Portal / Firebase secrets, a 
 - **Two real deploy-breaking bugs found via a Vercel CLI dry-run deploy earlier in this process, both fixed in v0.0.50 (now superseded by v2.0.6, see below):** the `prepare` npm script hard-failing `npm install` when no `.git` directory is present, and `engines.node` pinned to an unsupported `24.x`.
 - **A third, more subtle bug found after going live: the footer showed `v0.0.18` instead of the real version.** The auto-versioning script (`scripts/sync-version.js`) computed the version as `0.0.{git rev-list --count HEAD}` — accurate in a full local clone, but **Vercel does a shallow git checkout for its builds**, so `git rev-list --count` silently returned a much smaller, arbitrary number instead of erroring. Confirmed by comparing against the true count from a full local clone (52) vs. what was shown (18). **Fix (2026-08-20, v2.0.6): removed the entire auto-versioning mechanism** (`scripts/sync-version.js`, the tracked pre-commit hook, the generated `src/version.js`, the `prepare`/`prestart`/`prebuild` npm scripts) in favor of a plain hand-bumped `package.json` `version` field, exposed to the client via `REACT_APP_VERSION=$npm_package_version` in a committed `.env` file — CRA's own documented dotenv-expand pattern, not dependent on git history depth at all. Verified locally: `"2.0.6"` confirmed present in both the dev bundle and a real `npm run build` output.
 
+### ⚠ Suspected production data loss (2026-08-20) — unresolved, root cause unknown
+
+**Symptom:** the "Add Existing Team Member" dropdown on the live production site (`rams-six.vercel.app`) is empty, where it previously showed real UCtel staff (James Smith, Sergejs Smatovs, Mahyar Ranjkesh, Miroslav Liminovic, Daniel Romanov, David Russell — confirmed present in an earlier screenshot from this same session).
+
+**Confirmed real, not a display/permission bug** — checked directly against the real `rams-generator-bdcb7` project, not assumed:
+- `curl https://rams-six.vercel.app/api/rams/share/fsgopx8muow8c7` (a real shareCode from the earlier screenshot, "Untitled RAMS") → **`404 {"error":"RAMS not found."}`**. This endpoint uses the Admin SDK server-side, which bypasses Firestore security rules entirely — a 404 here means the document itself is gone, not that something is blocking read access to it.
+- Direct unauthenticated REST reads against `rams-generator-bdcb7`: `teamMembers`, `jobTemplates`, `riskAssessments`, and `ramsDocuments` all return empty (`{}`). **`standardTasks` returns real data via the exact same method** — which rules out a blanket rules/auth problem (a rules change would block all collections equally, not some) and is consistent with those specific collections having actually lost their data.
+- No Firestore/fetch error appears anywhere in the browser console (checked a real console export) — the app's own `catch` block around this fetch (`App.js`, `"Error fetching data from Firebase:"`) never fired, meaning the reads succeeded and just came back empty. Consistent with genuinely missing data, not a permission exception.
+
+**Ruled out, with reasoning, not just denial:**
+- **This session's Admin SDK scripts (seeding/cleanup for sandbox testing):** every one of them loaded the sandbox project's service account key explicitly. That's a hard Google Cloud IAM boundary — that credential has zero permission on `rams-generator-bdcb7`, structurally incapable of touching it, regardless of what code ran.
+- **A stray commit shipping sandbox config to production:** every commit this session used explicit `git add <file> <file> ...` (never `-A`/`.`), and `src/firebase.js` was never among the staged files in any of them — checked directly, not assumed. What deployed always had the real project's client config.
+- **Firestore rules blocking the reads:** ruled out above (`standardTasks` proves rules aren't the blocker) — and separately, our tightened rules were never even deployed to this project in the first place (no access).
+
+**Not yet known:** actual root cause. Don't treat the above as an all-clear — it only rules out the mechanisms checked, not everything possible.
+
+**Next step, not yet done:** check whether `rams-generator-bdcb7` has Firestore backups or Point-in-Time Recovery enabled — that's the real recovery path if this data is genuinely gone. Needs whoever has Firebase console access to that project (likely dj-iv — same recurring access gap as the Vercel team and rules-deploy issues above). **User explicitly deferred acting on this ("Not right now... we will get to it") — do not attempt further investigation or recovery action without checking in first.**
+
 ---
 
 ## Recent Fixes
@@ -145,6 +163,8 @@ To test locally without the developer's real UCtel Portal / Firebase secrets, a 
 ---
 
 ## Outstanding / Next Steps
+
+- [ ] **⚠ HIGHEST PRIORITY — investigate suspected production data loss in `rams-generator-bdcb7`** (found 2026-08-20, deferred by request). `teamMembers`, `jobTemplates`, `riskAssessments`, and `ramsDocuments` collections appear to have lost data — confirmed via a real document 404ing on the live share API, not a display bug. Root cause unknown. See the full write-up in §Current State before touching anything related to this. Check Firestore backups / Point-in-Time Recovery on that project as the first real step, once someone with console access is available.
 
 - [x] Set up `.env.local` with Firebase credentials (2026-08-20 — sandbox project, not the real one; portal auth skipped via `RAMS_DEV_PORTAL_BYPASS`, see §Local Testing)
 - [x] Test portal auth flow locally — dev-bypass path confirmed working end-to-end (2026-08-20)

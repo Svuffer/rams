@@ -4,6 +4,22 @@ All entries newest-first. Every entry includes a **Rollback** line.
 
 ---
 
+## 2026-08-20 -- Investigation: suspected production data loss (unresolved)
+
+No code changed -- investigation only, documented per this repo's convention of recording sessions even when nothing gets committed. Full detail in `HANDOVER_RAMS.md` (§Current State, §Outstanding).
+
+User reported the "Add Existing Team Member" dropdown empty on the live site, where it previously showed real staff. Checked directly against the real `rams-generator-bdcb7` project (not assumed):
+- A known real document (shareCode `fsgopx8muow8c7`) now 404s via the app's own Admin-SDK-backed public share API -- confirms real data loss, not a permission/display bug
+- `teamMembers`, `jobTemplates`, `riskAssessments`, `ramsDocuments` all read back empty via direct unauthenticated REST checks; `standardTasks` returns real data via the identical method -- rules out a blanket rules/auth explanation (a rules change would block everything equally, not selectively)
+- No Firestore error appears in the browser console -- the app's own fetch `catch` block never fired, consistent with reads succeeding and genuinely coming back empty
+- Ruled out, with reasoning: this session's Admin SDK scripts (sandbox-only service account, hard IAM boundary, cannot touch the real project) and any stray commit shipping sandbox config to production (every commit used explicit file lists, `src/firebase.js` never among them, checked directly)
+
+Root cause not found. Recovery path not yet started (Firestore backups / Point-in-Time Recovery on `rams-generator-bdcb7`, needs real console access). **Explicitly deferred by user request** -- do not resume without checking in first.
+
+**Rollback:** N/A -- nothing was changed, this is a documentation-only entry recording an open investigation.
+
+---
+
 ## 2026-08-20 -- v2.2.0: Engineer assignment + sign-off acceptance
 
 Request: assign a RAMS to the engineers doing the install, and let them acknowledge/accept it. Engineers confirmed to be existing UCtel staff with individual Google Workspace logins via the UCtel Portal (not external subcontractors) -- so acceptance can be gated by the already-authenticated `currentUser`, no new auth work needed.

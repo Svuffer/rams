@@ -4,6 +4,20 @@ All entries newest-first. Every entry includes a **Rollback** line.
 
 ---
 
+## 2026-08-20 -- Blank Step 1 (Project Details) fields by default
+
+Change request: "RAMS must be specific to the individual site and project. Pre-populated or default project information creates a risk that details from a previous or generic project could be carried into a new RAMS document without being properly reviewed."
+
+Every new document previously defaulted to a fixed fake project: client "iQ Student Accommodation", site "120 Longwood Close, Coventry", dated September 2025, prepared by "James Smith" with a specific hardcoded email/phone -- all silently carried into every new RAMS unless manually cleared first.
+
+- `src/App.js`: `client`, `siteAddress`, `commencementDate`, `estimatedCompletionDate`, `preparedBy`, `preparedByEmail`, `preparedByPhone` now default to `''` instead of hardcoded values
+- Deliberately left unchanged: `hoursOfWork` (generic 08:00-17:00 default, not project-identifying), `documentCreationDate` (already dynamic, defaults to today), `revisionNumber` (sensible default of `'1'`)
+- **Related but out of scope:** Step 2's default `projectTeam` entry still hardcodes "James Smith, Project Coordinator" -- same underlying issue, a different step, not touched by this change
+
+**Rollback:** `git revert <this commit>` restores the hardcoded defaults.
+
+---
+
 ## 2026-08-20 -- Tighten Firestore security rules
 
 `firestore.rules` was `allow read, write: if true` for every collection -- anyone who inspected the public Firebase client config (visible by design in the committed JS bundle) could read, write, or delete any RAMS document or reference list directly, completely bypassing UCtel Portal login.

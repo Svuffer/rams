@@ -31,6 +31,7 @@ import ShareView from './components/ShareView';
 import { useAuth } from './hooks/useAuth';
 import { useSavedRamsDocuments } from './hooks/useSavedRamsDocuments';
 import SavedRamsPage from './pages/SavedRamsPage';
+import AssignedRamsPage from './pages/AssignedRamsPage';
 
 const PORTAL_BASE_URL = process.env.REACT_APP_PORTAL_URL || 'http://localhost:3300';
 // [SEC 100 END]
@@ -639,11 +640,17 @@ const AppContent = () => {
       return;
     }
 
+    const assignedEngineers = (preparedForm.projectTeam || [])
+      .filter(member => member.requiresSignOff && member.email)
+      .map(member => ({ id: member.id, name: member.name || '', email: member.email }));
+
     const summary = {
       client: preparedForm.client || 'Untitled RAMS',
       projectDescription: preparedForm.projectDescription || '',
       siteAddress: preparedForm.siteAddress || '',
       preparedBy: preparedForm.preparedBy || '',
+      assignedEngineers,
+      assignedEngineerEmails: assignedEngineers.map(e => e.email),
     };
 
     setIsSavingDocument(true);
@@ -669,6 +676,7 @@ const AppContent = () => {
           ...summary,
           formData: preparedForm,
           shareCode,
+          acceptances: {},
           ownerUid: currentUser.uid,
           ownerEmail: currentUser.email || null,
           ownerName: currentUser.displayName || preparedForm.preparedBy || null,
@@ -1518,9 +1526,17 @@ useEffect(() => {
     }
   }, [formData]);
 
+  const handleToggleEngineerSignoff = useCallback((index) => {
+    setFormData(prev => {
+      const updatedTeam = [...prev.projectTeam];
+      updatedTeam[index] = { ...updatedTeam[index], requiresSignOff: !updatedTeam[index].requiresSignOff };
+      return { ...prev, projectTeam: updatedTeam };
+    });
+  }, []);
+
   const addTeamMember = async () => {
     const newId = Date.now().toString();
-    const newMember = { id: newId, name: '', role: '', phone: '', competencies: '' };
+    const newMember = { id: newId, name: '', role: '', phone: '', email: '', competencies: '' };
     try {
       await setDoc(doc(db, 'teamMembers', newId), newMember);
       setDbTeamMembers(prev => [...prev, newMember]);
@@ -1809,7 +1825,7 @@ useEffect(() => {
           onSignatureImageRemove={handleSignatureImageRemove}
         />
       );
-      case 2: return <Step2 data={formData} onChange={handleProjectTeamChange} onAdd={addTeamMember} onRemove={removeTeamMember} dbTeamMembers={dbTeamMembers} onSelectMember={handleSelectTeamMember} />;
+      case 2: return <Step2 data={formData} onChange={handleProjectTeamChange} onAdd={addTeamMember} onRemove={removeTeamMember} dbTeamMembers={dbTeamMembers} onSelectMember={handleSelectTeamMember} onToggleSignoff={handleToggleEngineerSignoff} />;
      case 3: return <Step3 
           data={formData} 
           allTasks={allTasks} 
@@ -1914,6 +1930,12 @@ useEffect(() => {
                 Manage Saved RAMS
               </button>
               <button
+                onClick={() => navigate('/assigned')}
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-[var(--uctel-blue)] hover:text-[var(--uctel-blue)] focus:outline-none focus:ring-2 focus:ring-[var(--uctel-blue)]"
+              >
+                Assigned RAMS
+              </button>
+              <button
                 onClick={handleSaveDocument}
                 disabled={isSavingDocument || !formData || !currentUser}
                 className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition focus:outline-none focus:ring-2 focus:ring-[var(--uctel-blue)] ${isSavingDocument || !formData || !currentUser ? 'bg-slate-200 text-slate-500 cursor-not-allowed' : 'bg-[var(--uctel-blue)] text-white hover:bg-opacity-90'}`}
@@ -1998,6 +2020,7 @@ const App = () => (
     <Routes>
       <Route path="/" element={<AppContent />} />
       <Route path="/saved" element={<SavedRamsPage />} />
+      <Route path="/assigned" element={<AssignedRamsPage />} />
       <Route path="/share/:shareCode" element={<ShareView />} />
       {/* The /preview route is no longer needed */}
       {/* <Route path="/preview" element={<PreviewPage />} /> */}

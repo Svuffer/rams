@@ -133,9 +133,7 @@ const Step2 = ({
                                 Requires sign-off
                             </label>
                         </div>
-                        {data.projectTeam.length > 1 && (
-                            <button onClick={() => onRemove(index)} title="Remove from this document only -- does not affect the company team list" className="absolute -top-2 -right-2 bg-red-500 text-white h-6 w-6 rounded-full flex items-center justify-center hover:bg-red-600 transition-colors">&times;</button>
-                        )}
+                        <button onClick={() => onRemove(index)} title="Remove from this document only -- does not affect the company team list" className="absolute -top-2 -right-2 bg-red-500 text-white h-6 w-6 rounded-full flex items-center justify-center hover:bg-red-600 transition-colors">&times;</button>
                     </div>
                 ))}
             </div>

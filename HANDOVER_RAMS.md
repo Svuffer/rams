@@ -200,6 +200,7 @@ To test locally without the developer's real UCtel Portal / Firebase secrets, a 
   - `jobTemplates` being empty was confirmed separately as **expected** -- intentional staff cleanup via the (correctly labeled) Delete Template feature, not a bug.
   - `ramsDocuments` remains the one still-unexplained collection.
 - [x] **Blank the default Project Team entry** (2026-08-21, v2.3.1) — Step 2 always defaulted its first team member row to "James Smith, Project Coordinator, +44 7730 890403, First Aid, Working at Height" on every new document, same underlying issue as the Step 1 fields fixed earlier ("Change 1"), just in a different step and missed at the time. Now blank (`{id: '1', name: '', role: '', phone: '', email: '', competencies: ''}`). Verified against the real running app: all five fields confirmed blank on a fresh document.
+- [x] **Remove the "at least one team member" restriction on Step 2** (2026-08-21, v2.3.2) — the "×" remove button previously only rendered when more than one row existed (`Step2.js`, `data.projectTeam.length > 1`), so the last remaining row could never be removed via the UI. Removed the guard entirely. Verified against the real running app: removed the sole row down to zero, no crash, Step 3 still renders fine afterward.
 - [ ] Add share link expiry or access log
 
 ---

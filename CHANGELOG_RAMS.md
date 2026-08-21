@@ -4,6 +4,17 @@ All entries newest-first. Every entry includes a **Rollback** line.
 
 ---
 
+## 2026-08-21 -- v2.3.2: Remove the "at least one team member" restriction
+
+`Step2.js`'s remove ("x") button only rendered when `data.projectTeam.length > 1`, so the last remaining team member row could never be removed through the UI -- a soft, undocumented restriction with no validation message, just a missing button.
+
+- Removed the `length > 1` guard -- the remove button now always renders, including on the last row
+- Verified against the real running app: removed the sole row down to zero team members, no crash, Step 3 renders normally afterward with an empty team list
+
+**Rollback:** `git revert <this commit>`.
+
+---
+
 ## 2026-08-21 -- v2.3.1: Blank the default Project Team entry
 
 Same issue as the original Step 1 blank-defaults change, just missed at the time -- Step 2 always defaulted its first team member row to a fixed fake person ("James Smith, Project Coordinator, +44 7730 890403, First Aid, Working at Height") on every new document.

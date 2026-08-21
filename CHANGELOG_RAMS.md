@@ -4,6 +4,17 @@ All entries newest-first. Every entry includes a **Rollback** line.
 
 ---
 
+## 2026-08-21 -- v2.3.1: Blank the default Project Team entry
+
+Same issue as the original Step 1 blank-defaults change, just missed at the time -- Step 2 always defaulted its first team member row to a fixed fake person ("James Smith, Project Coordinator, +44 7730 890403, First Aid, Working at Height") on every new document.
+
+- `src/App.js`: `initialFormState.projectTeam`'s default entry now `{id: '1', name: '', role: '', phone: '', email: '', competencies: ''}` instead of the hardcoded values
+- Verified against the real running app: all five fields (name, role, competencies, phone, email) confirmed blank on Step 2 for a fresh document
+
+**Rollback:** `git revert <this commit>`.
+
+---
+
 ## 2026-08-21 -- v2.3.0: Fix the real root cause of team-member/risk-assessment data loss
 
 Found while investigating why `teamMembers` and `riskAssessments` were empty in production (see `HANDOVER_RAMS.md` for the full incident writeup): two pre-existing bugs, not introduced this session, where a button that looked like "remove from my document" actually permanently deleted shared, company-wide reference data.

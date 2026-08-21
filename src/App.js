@@ -795,7 +795,7 @@ useEffect(() => {
           preparedByPhone: '',
           documentCreationDate: initialDocumentDate,
           revisionNumber: '1',
-          projectTeam: [ { id: '1', name: 'James Smith', role: 'Project Coordinator', phone: '+44 7730 890403', competencies: 'First Aid, Working at Height'} ],
+          projectTeam: [ { id: '1', name: '', role: '', phone: '', email: '', competencies: '' } ],
           jobTemplate: initialTemplateKey,
           selectedTasks: buildInitialTasks(allTasks, initialTemplateKey, allTemplates),
           risks: JSON.parse(JSON.stringify(allRisks)), // Use fetched risks

@@ -4,6 +4,19 @@ All entries newest-first. Every entry includes a **Rollback** line.
 
 ---
 
+## 2026-08-21 -- v2.3.0: Fix the real root cause of team-member/risk-assessment data loss
+
+Found while investigating why `teamMembers` and `riskAssessments` were empty in production (see `HANDOVER_RAMS.md` for the full incident writeup): two pre-existing bugs, not introduced this session, where a button that looked like "remove from my document" actually permanently deleted shared, company-wide reference data.
+
+- **`removeTeamMember`** (the "x" on Step 2's Project Team list): was calling `deleteDoc` on the shared `teamMembers/{id}` record, not just removing the person from the current document. Fixed to be purely local -- `setFormData` only, no Firestore call at all.
+- **New "Manage Team Members" panel** next to the "Add Existing Team Member" dropdown -- this is where the real, deliberate, global add/edit/delete now lives, with an honest confirm dialog ("Permanently delete ... from the company team list? This removes them from every future RAMS document and cannot be undone.") instead of the vague wording the old button had.
+- **`handleDeleteHazard`** (the "Delete" button per hazard in Step 4): overwrote the entire shared `riskAssessments/{category}` document, permanently removing that hazard company-wide, while the checkbox right next to it (which correctly, safely excludes a hazard from just the current document) was already implemented properly. Fix here was just honest labeling -- reworded the confirm dialog and button ("Delete" -> "Delete Permanently") to say what it actually does, since the safe local alternative already existed and didn't need to be built.
+- Verified end-to-end against the real running app: confirmed the "x" no longer touches Firestore, confirmed the new Manage panel's edit and permanent-delete both work and are clearly labeled, confirmed the new hazard-delete wording is present in the production build.
+
+**Rollback:** `git revert <this commit>` -- reintroduces both bugs. Only do this if the fix itself causes an unrelated problem; the bugs it removes are real and already confirmed to have caused production data loss.
+
+---
+
 ## 2026-08-20 -- Investigation: suspected production data loss (unresolved)
 
 No code changed -- investigation only, documented per this repo's convention of recording sessions even when nothing gets committed. Full detail in `HANDOVER_RAMS.md` (§Current State, §Outstanding).

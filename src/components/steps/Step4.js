@@ -236,16 +236,17 @@ const Step4 = ({ data, handlers, addingHazardTo, showNewRiskCategoryForm }) => {
                                             </button>
                                             <button
                                                 onClick={() => {
-                                                    if (window.confirm('Remove this hazard from the category?')) {
+                                                    if (window.confirm('Permanently delete this hazard from the master risk list? This removes it from EVERY RAMS document company-wide, not just this one, and cannot be undone. To just exclude it from this specific document, use the checkbox instead.')) {
                                                         handlers.handleDeleteHazard(riskKey, hazard.id);
                                                         if (isEditingHazard) {
                                                             setEditingHazard(null);
                                                         }
                                                     }
                                                 }}
+                                                title="Permanently deletes this hazard for all RAMS documents -- to exclude it from just this document, use the checkbox instead"
                                                 className="px-3 py-1 text-xs font-semibold border border-red-200 text-red-600 rounded-md hover:bg-red-50"
                                             >
-                                                Delete
+                                                Delete Permanently
                                             </button>
                                         </div>
                                         {isEditingHazard && (

@@ -199,6 +199,7 @@ To test locally without the developer's real UCtel Portal / Firebase secrets, a 
   - Verified end-to-end against the real running app: confirmed the "×" no longer touches Firestore, confirmed the new Manage panel's edit and permanent-delete both work correctly and are clearly labeled.
   - `jobTemplates` being empty was confirmed separately as **expected** -- intentional staff cleanup via the (correctly labeled) Delete Template feature, not a bug.
   - `ramsDocuments` remains the one still-unexplained collection.
+- [x] **Blank the default Project Team entry** (2026-08-21, v2.3.1) — Step 2 always defaulted its first team member row to "James Smith, Project Coordinator, +44 7730 890403, First Aid, Working at Height" on every new document, same underlying issue as the Step 1 fields fixed earlier ("Change 1"), just in a different step and missed at the time. Now blank (`{id: '1', name: '', role: '', phone: '', email: '', competencies: ''}`). Verified against the real running app: all five fields confirmed blank on a fresh document.
 - [ ] Add share link expiry or access log
 
 ---

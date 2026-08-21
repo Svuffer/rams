@@ -1502,12 +1502,21 @@ useEffect(() => {
 
   const handleSelectTeamMember = (memberId) => {
     const selectedMember = dbTeamMembers.find(m => m.id === memberId);
-    if (selectedMember) {
-      setFormData(prev => ({
-        ...prev,
-        projectTeam: [...prev.projectTeam, { ...selectedMember }]
-      }));
+    if (!selectedMember) {
+      return;
     }
+    setFormData(prev => {
+      // Fill an existing blank row (never manually populated) instead of
+      // adding a new one, so picking from the dropdown doesn't leave a
+      // leftover empty row that then has to be deleted separately.
+      const blankIndex = prev.projectTeam.findIndex(m => !m.name);
+      if (blankIndex !== -1) {
+        const updatedTeam = [...prev.projectTeam];
+        updatedTeam[blankIndex] = { ...selectedMember };
+        return { ...prev, projectTeam: updatedTeam };
+      }
+      return { ...prev, projectTeam: [...prev.projectTeam, { ...selectedMember }] };
+    });
   };
 
   const handleProjectTeamChange = useCallback(async (index, field, value) => {

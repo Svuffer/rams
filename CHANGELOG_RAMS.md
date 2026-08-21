@@ -4,6 +4,17 @@ All entries newest-first. Every entry includes a **Rollback** line.
 
 ---
 
+## 2026-08-21 -- v2.3.3: Dropdown selection fills a blank row instead of always adding a new one
+
+Follow-up to v2.3.1 (blanked the default Project Team row) -- since that row starts empty, picking someone from "Add Existing Team Member" used to leave it sitting there unused, requiring a separate manual delete afterward.
+
+- `src/App.js`: `handleSelectTeamMember` now looks for an existing row with no name and fills that instead of always appending. Falls back to appending only when every row already has a name (unchanged behavior for that case).
+- Verified against the real running app: selecting a person on a fresh document fills the blank row directly (one row total, no leftover); selecting a second person correctly appends since no blank row remains.
+
+**Rollback:** `git revert <this commit>`.
+
+---
+
 ## 2026-08-21 -- v2.3.2: Remove the "at least one team member" restriction
 
 `Step2.js`'s remove ("x") button only rendered when `data.projectTeam.length > 1`, so the last remaining team member row could never be removed through the UI -- a soft, undocumented restriction with no validation message, just a missing button.

@@ -6,7 +6,7 @@ All entries newest-first. Every entry includes a **Rollback** line.
 
 ## 2026-08-21 -- v2.3.4: Docs-only release -- README rewrite, handover header fix, version bump
 
-Two prior fixes (HANDOVER_RAMS.md header staleness and the README rewrite) merged to `main` without a version bump, per the project's usual practice of bumping for every merged change -- including docs-only ones -- so the in-app footer version reliably reflects what's actually deployed. This entry retroactively covers both, plus bumps the version so the deploy is verifiable from the GUI.
+Two prior fixes (HANDOVER_RAMS.md header staleness and the README rewrite) merged to `main` without a version bump, breaking from the project's usual practice of bumping for every merged change -- including docs-only ones -- so the in-app footer version reliably reflects what's actually deployed. This entry retroactively covers both, plus bumps the version so the deploy is verifiable from the GUI.
 
 - `README.md`: rewritten to describe the actual app (7-step wizard, shared master lists, engineer assignment/sign-off, sharing, auth flow, deployment) instead of leftover Create React App boilerplate
 - `HANDOVER_RAMS.md`: header version/date corrected (was still showing v2.2.0 / 2026-08-20), 4 missing Recent Fixes rows added for v2.3.0-v2.3.3

@@ -1,6 +1,6 @@
 # HANDOVER — RAMS Generator
 
-**Version:** `package.json` `version` field — plain hand-bumped semver, currently `2.3.3`. No longer auto-derived from git commit count (that mechanism was removed 2026-08-20 — it silently produced wrong numbers under Vercel's shallow git clone; see §Current State).
+**Version:** `package.json` `version` field — plain hand-bumped semver, currently `2.3.4`. No longer auto-derived from git commit count (that mechanism was removed 2026-08-20 — it silently produced wrong numbers under Vercel's shallow git clone; see §Current State). Bumped on **every** merged change, including docs-only ones, so the in-app footer version reliably reflects what's actually deployed.
 **Status:** **Live in production** at https://rams-six.vercel.app (deployed 2026-08-20, latest fixes deployed 2026-08-21). Local dev environment working end-to-end against a dedicated sandbox Firebase project (see §Local Testing). **⚠ Real data loss occurred in the production Firestore project (`rams-generator-bdcb7`), discovered 2026-08-20 — root cause found and fixed for `teamMembers`/`riskAssessments` (2026-08-21, v2.3.0), `jobTemplates` confirmed expected/intentional, `ramsDocuments` still unexplained. No backups exist for this project (billing never configured) — see §Current State.**
 **Last updated:** 2026-08-21
 
@@ -149,6 +149,7 @@ To test locally without the developer's real UCtel Portal / Firebase secrets, a 
 
 | Date | Change | Detail |
 |------|--------|--------|
+| 2026-08-21 | Docs-only release: README rewrite, handover header fix, version bump (v2.3.4) | [CHANGELOG_RAMS.md](CHANGELOG_RAMS.md) |
 | 2026-08-21 | Dropdown selection fills a blank team member row instead of appending (v2.3.3) | [CHANGELOG_RAMS.md](CHANGELOG_RAMS.md) |
 | 2026-08-21 | Remove "at least one team member" restriction (v2.3.2) | [CHANGELOG_RAMS.md](CHANGELOG_RAMS.md) |
 | 2026-08-21 | Blank the default Project Team entry (v2.3.1) | [CHANGELOG_RAMS.md](CHANGELOG_RAMS.md) |

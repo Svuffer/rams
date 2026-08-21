@@ -1,4 +1,4 @@
-# Getting Started with Create React App
+# RAMS Generator v2.3.3
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 

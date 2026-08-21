@@ -4,6 +4,19 @@ All entries newest-first. Every entry includes a **Rollback** line.
 
 ---
 
+## 2026-08-21 -- v2.3.4: Docs-only release -- README rewrite, handover header fix, version bump
+
+Two prior fixes (HANDOVER_RAMS.md header staleness and the README rewrite) merged to `main` without a version bump, per the project's usual practice of bumping for every merged change -- including docs-only ones -- so the in-app footer version reliably reflects what's actually deployed. This entry retroactively covers both, plus bumps the version so the deploy is verifiable from the GUI.
+
+- `README.md`: rewritten to describe the actual app (7-step wizard, shared master lists, engineer assignment/sign-off, sharing, auth flow, deployment) instead of leftover Create React App boilerplate
+- `HANDOVER_RAMS.md`: header version/date corrected (was still showing v2.2.0 / 2026-08-20), 4 missing Recent Fixes rows added for v2.3.0-v2.3.3
+- `package.json`: version bumped 2.3.3 -> 2.3.4
+- No app code changed.
+
+**Rollback:** `git revert <this commit>`.
+
+---
+
 ## 2026-08-21 -- v2.3.3: Dropdown selection fills a blank row instead of always adding a new one
 
 Follow-up to v2.3.1 (blanked the default Project Team row) -- since that row starts empty, picking someone from "Add Existing Team Member" used to leave it sitting there unused, requiring a separate manual delete afterward.

@@ -1,4 +1,4 @@
-# RAMS Generator v2.3.5
+# RAMS Generator v2.3.6
 
 A React + Firebase app for building, sharing, and tracking sign-off on Risk Assessment and Method Statement (RAMS) documents for UCtel installation work. Part of the UCtel Portal ecosystem — deployed at [rams.uctel.co.uk](https://rams.uctel.co.uk).
 

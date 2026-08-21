@@ -1,7 +1,7 @@
 # HANDOVER — RAMS Generator
 
-**Version:** `package.json` `version` field — plain hand-bumped semver, currently `2.0.6`. No longer auto-derived from git commit count (that mechanism was removed 2026-08-20 — it silently produced wrong numbers under Vercel's shallow git clone; see §Current State).
-**Status:** **Live in production** at https://rams-six.vercel.app (deployed 2026-08-20). Local dev environment working end-to-end against a dedicated sandbox Firebase project (see §Local Testing).
+**Version:** `package.json` `version` field — plain hand-bumped semver, currently `2.2.0`. No longer auto-derived from git commit count (that mechanism was removed 2026-08-20 — it silently produced wrong numbers under Vercel's shallow git clone; see §Current State).
+**Status:** **Live in production** at https://rams-six.vercel.app (deployed 2026-08-20). Local dev environment working end-to-end against a dedicated sandbox Firebase project (see §Local Testing). **⚠ Real data loss occurred in the production Firestore project (`rams-generator-bdcb7`), discovered 2026-08-20 — root cause found and fixed for `teamMembers`/`riskAssessments` (2026-08-21, v2.3.0), `jobTemplates` confirmed expected/intentional, `ramsDocuments` still unexplained. No backups exist for this project (billing never configured) — see §Current State.**
 **Last updated:** 2026-08-20
 
 ---
@@ -127,6 +127,22 @@ To test locally without the developer's real UCtel Portal / Firebase secrets, a 
 - **Two real deploy-breaking bugs found via a Vercel CLI dry-run deploy earlier in this process, both fixed in v0.0.50 (now superseded by v2.0.6, see below):** the `prepare` npm script hard-failing `npm install` when no `.git` directory is present, and `engines.node` pinned to an unsupported `24.x`.
 - **A third, more subtle bug found after going live: the footer showed `v0.0.18` instead of the real version.** The auto-versioning script (`scripts/sync-version.js`) computed the version as `0.0.{git rev-list --count HEAD}` — accurate in a full local clone, but **Vercel does a shallow git checkout for its builds**, so `git rev-list --count` silently returned a much smaller, arbitrary number instead of erroring. Confirmed by comparing against the true count from a full local clone (52) vs. what was shown (18). **Fix (2026-08-20, v2.0.6): removed the entire auto-versioning mechanism** (`scripts/sync-version.js`, the tracked pre-commit hook, the generated `src/version.js`, the `prepare`/`prestart`/`prebuild` npm scripts) in favor of a plain hand-bumped `package.json` `version` field, exposed to the client via `REACT_APP_VERSION=$npm_package_version` in a committed `.env` file — CRA's own documented dotenv-expand pattern, not dependent on git history depth at all. Verified locally: `"2.0.6"` confirmed present in both the dev bundle and a real `npm run build` output.
 
+### ⚠ Production data loss (2026-08-20/21) — mostly resolved, `ramsDocuments` still unexplained
+
+**Symptom:** `teamMembers`, `jobTemplates`, `riskAssessments`, and `ramsDocuments` were all found empty in the real `rams-generator-bdcb7` Firestore project — confirmed directly (not assumed), via three independent methods that all agreed: unauthenticated REST reads, directly browsing the Firestore console after the user was granted Google Cloud Organization Administrator access (their Workspace Super Admin role reaches this project since it's under UCtel's Cloud Organization), and a live browser console snippet run against the production site itself. `standardTasks`, `ppe`, `tools`, `materials`, and `permits` were all confirmed intact throughout.
+
+**Root cause found for two of the four — real, pre-existing bugs, not this session's work:**
+- **`teamMembers`:** the "×" button to remove someone from a RAMS document's Project Team list (Step 2) was calling `deleteDoc` on the **shared, company-wide** `teamMembers/{id}` record — not just removing them from that one document. Anyone, on any document, at any time, believing they were doing a harmless per-document action, was actually permanently deleting that person from every RAMS company-wide. No single incident required — just ordinary use over time. **Fixed 2026-08-21 (v2.3.0)** — see the Outstanding entry below for the fix.
+- **`riskAssessments`:** the same pattern, one level down — the "Delete" button on an individual hazard (Step 4) overwrote the entire shared risk category document, permanently removing that hazard for every RAMS company-wide, while a correctly-scoped local-only checkbox sat right next to it doing the safe version of what people likely thought "Delete" did. **Fixed 2026-08-21 (v2.3.0)** — reworded to be honest about what it does, since the safe alternative (the checkbox) already existed.
+- **`jobTemplates`:** confirmed by the user to be **expected** — legitimate staff cleanup via the (correctly-labeled, confirm-gated) Delete Template feature. Not a bug, not unexpected.
+- **`ramsDocuments`:** still genuinely unexplained. No equivalent "looks local, is actually global" pattern has been found for documents — the existing Delete on the Saved RAMS list is properly labeled ("permanently delete," explicit confirm). Possible this was also legitimate staff cleanup of old/test documents, never confirmed either way.
+
+**Ruled out along the way, with reasoning, not just denial:** this session's own Admin SDK test scripts (hard IAM boundary — sandbox-only credentials structurally cannot touch the real project), a stray commit shipping sandbox config to production (every commit used explicit file lists, checked directly), and Firestore rules/auth issues (an unauthenticated read of `standardTasks` returning real data proves rules weren't blocking anything — a rules problem would block every collection equally, not selectively). Real production rules were also confirmed via the Firestore console's own rule-set history to be unchanged since **24 Sept 2025** — our tightened version was never deployed here.
+
+**No backups exist for this project.** Firestore Point-in-Time Recovery/scheduled backups require the Blaze (pay-as-you-go) billing plan, and billing was never configured on `rams-generator-bdcb7` — confirmed directly by the user in the console. This has been true the whole time, independent of this incident, and remains true — worth fixing regardless, since without it any future deletion (accidental or otherwise) is equally unrecoverable. Not yet done.
+
+**A related, separate bug found and fixed in the same pass:** with `jobTemplates` empty, the "Select Job Template" dropdown in Step 3 ends up with only one DOM option ("+ Add New Template..."), which the browser then treats as already-selected by default. A real user clicking it fires no `change` event (nothing actually changes from the browser's point of view), so the "Add New Template" form silently never opens. Reproduced directly against the sandbox in the same empty-`jobTemplates` state as production. **Not yet fixed** — see Outstanding.
+
 ---
 
 ## Recent Fixes
@@ -145,6 +161,11 @@ To test locally without the developer's real UCtel Portal / Firebase secrets, a 
 ---
 
 ## Outstanding / Next Steps
+
+- [x] **Investigate production data loss in `rams-generator-bdcb7`** (found 2026-08-20, resolved 2026-08-21 for 3 of 4 collections) — see full writeup in §Current State. `teamMembers`/`riskAssessments`: real bug found and fixed (v2.3.0). `jobTemplates`: confirmed expected/intentional staff cleanup. `ramsDocuments`: still unexplained.
+- [ ] **Configure billing on `rams-generator-bdcb7`** so Firestore Point-in-Time Recovery becomes available — confirmed no backups currently exist at all, independent of this incident, and this remains true. Any future data loss (accidental or otherwise) is equally unrecoverable until this is done.
+- [ ] **Fix the "Add New Template" dead-end when `jobTemplates` is empty** — with zero templates, the Step 3 dropdown ends up with only "+ Add New Template..." as its sole, browser-default-selected option, so a real click fires no `change` event and the form never opens. Reproduced directly. Needs a proper blank/disabled placeholder option so the dropdown always has more than one entry.
+- [ ] Figure out what actually happened to `ramsDocuments` — possibly also legitimate staff cleanup (matching `jobTemplates`), never confirmed either way. Worth asking directly rather than continuing to investigate from outside.
 
 - [x] Set up `.env.local` with Firebase credentials (2026-08-20 — sandbox project, not the real one; portal auth skipped via `RAMS_DEV_PORTAL_BYPASS`, see §Local Testing)
 - [x] Test portal auth flow locally — dev-bypass path confirmed working end-to-end (2026-08-20)
@@ -172,6 +193,12 @@ To test locally without the developer's real UCtel Portal / Firebase secrets, a 
   - Sign-off is a **typed name only**, not the full typed/image-upload toggle from Step 1's signature block — kept deliberately simpler since that wasn't explicitly requested; can be extended later if wanted.
   - **Known, deliberately deferred limitation:** Firestore rules currently let any authenticated UCtel staff member write anything (existing "team shared" model, not something this feature made worse) — so nothing at the database level stops someone from writing a fake acceptance under another person's identity via a direct write. The UI only ever shows/signs under the current user's own logged-in identity, but that's an app-level constraint, not a database-enforced one. User explicitly deferred fixing this ("We'll get to it later").
   - Verified end-to-end against the real running app: assigned an engineer, saved, confirmed it appeared as Pending on `/assigned` for that exact logged-in identity, reviewed the actual document content, signed, confirmed status flipped to Accepted with the correct signer name shown on re-open.
+- [x] **Fix the real, likely root cause of the team-member/risk-assessment data loss** (2026-08-21, v2.3.0) — see §Current State for the full incident writeup. Two pre-existing (not introduced this session) bugs where a button that looked like "remove from my document" actually permanently deleted shared, company-wide data:
+  - `removeTeamMember` (the "×" on Step 2's Project Team list) called `deleteDoc` on the global `teamMembers/{id}` record — fixed to be purely local (removes from the current document only). The real global delete now lives in a new "Manage Team Members" panel next to the "Add Existing Team Member" dropdown, with an explicit, honest confirm dialog and a proper Edit option too.
+  - `handleDeleteHazard` (the "Delete" button per hazard in Step 4) overwrote the entire shared `riskAssessments/{category}` document, permanently removing that hazard for every RAMS company-wide -- while the checkbox right next to it (which safely, correctly excludes a hazard from just the current document) was already implemented properly. Fix here was just honest labeling: reworded the confirm dialog and button text to say exactly what it does, since the safe local alternative already existed.
+  - Verified end-to-end against the real running app: confirmed the "×" no longer touches Firestore, confirmed the new Manage panel's edit and permanent-delete both work correctly and are clearly labeled.
+  - `jobTemplates` being empty was confirmed separately as **expected** -- intentional staff cleanup via the (correctly labeled) Delete Template feature, not a bug.
+  - `ramsDocuments` remains the one still-unexplained collection.
 - [ ] Add share link expiry or access log
 
 ---

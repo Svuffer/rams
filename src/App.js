@@ -551,6 +551,7 @@ const AppContent = () => {
   const [showNewTaskForm, setShowNewTaskForm] = useState(false);
   const [showNewTemplateForm, setShowNewTemplateForm] = useState(false);
   const [showEditTemplateForm, setShowEditTemplateForm] = useState(false);
+  const [showManageTeamMembers, setShowManageTeamMembers] = useState(false);
   const [step, setStep] = useState(1);
   const [addingHazardTo, setAddingHazardTo] = useState(null); // State to track which risk category is getting a new hazard
   const [showNewRiskCategoryForm, setShowNewRiskCategoryForm] = useState(false);
@@ -1549,21 +1550,47 @@ useEffect(() => {
     }
   };
 
-  const removeTeamMember = useCallback(async (index) => {
-    const member = formData.projectTeam[index];
-    if (member.id) {
-      try {
-        await deleteDoc(doc(db, 'teamMembers', member.id));
-        setDbTeamMembers(prev => prev.filter(m => m.id !== member.id));
-      } catch (error) {
-        console.error("Error removing team member:", error);
-      }
-    }
+  // Removes this person from THIS document's team list only. Does NOT touch
+  // the shared teamMembers collection -- previously it did (a real, severe
+  // bug: this button looked like a per-document action but permanently
+  // deleted the person from the company-wide roster). Use
+  // handleDeleteGlobalTeamMember for the real, deliberate, confirm-gated
+  // global delete.
+  const removeTeamMember = useCallback((index) => {
     setFormData(prev => {
       const updatedTeam = prev.projectTeam.filter((_, i) => i !== index);
       return { ...prev, projectTeam: updatedTeam };
     });
-  }, [formData]);
+  }, []);
+
+  // The real, deliberate, global delete -- lives in the "Manage Team
+  // Members" panel, separate from the per-document "x" button above.
+  const handleDeleteGlobalTeamMember = async (memberId) => {
+    const member = dbTeamMembers.find(m => m.id === memberId);
+    if (!member) {
+      return;
+    }
+    if (!window.confirm(`Permanently delete "${member.name || memberId}" from the company team list? This removes them from every future RAMS document and cannot be undone.`)) {
+      return;
+    }
+    try {
+      await deleteDoc(doc(db, 'teamMembers', memberId));
+      setDbTeamMembers(prev => prev.filter(m => m.id !== memberId));
+    } catch (error) {
+      console.error("Error deleting team member:", error);
+      alert("Failed to delete team member. Please check the console for details.");
+    }
+  };
+
+  const handleEditGlobalTeamMember = async (memberId, updates) => {
+    try {
+      await setDoc(doc(db, 'teamMembers', memberId), updates, { merge: true });
+      setDbTeamMembers(prev => prev.map(m => m.id === memberId ? { ...m, ...updates } : m));
+    } catch (error) {
+      console.error("Error updating team member:", error);
+      alert("Failed to update team member. Please check the console for details.");
+    }
+  };
 
   const handleAddNewRiskCategory = async ({ title }) => {
     if (!title.trim()) {
@@ -1825,7 +1852,19 @@ useEffect(() => {
           onSignatureImageRemove={handleSignatureImageRemove}
         />
       );
-      case 2: return <Step2 data={formData} onChange={handleProjectTeamChange} onAdd={addTeamMember} onRemove={removeTeamMember} dbTeamMembers={dbTeamMembers} onSelectMember={handleSelectTeamMember} onToggleSignoff={handleToggleEngineerSignoff} />;
+      case 2: return <Step2
+          data={formData}
+          onChange={handleProjectTeamChange}
+          onAdd={addTeamMember}
+          onRemove={removeTeamMember}
+          dbTeamMembers={dbTeamMembers}
+          onSelectMember={handleSelectTeamMember}
+          onToggleSignoff={handleToggleEngineerSignoff}
+          showManageTeamMembers={showManageTeamMembers}
+          onToggleManageTeamMembers={() => setShowManageTeamMembers(prev => !prev)}
+          onDeleteGlobalMember={handleDeleteGlobalTeamMember}
+          onEditGlobalMember={handleEditGlobalTeamMember}
+        />;
      case 3: return <Step3 
           data={formData} 
           allTasks={allTasks} 

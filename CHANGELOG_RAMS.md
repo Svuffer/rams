@@ -4,6 +4,18 @@ All entries newest-first. Every entry includes a **Rollback** line.
 
 ---
 
+## 2026-08-21 -- v2.3.5: Address Copilot PR review feedback on v2.3.4
+
+Copilot's automated review on PR #12 flagged two real issues: `package-lock.json`'s root `version` field was stale at `0.0.48` (a leftover from before the pre-2.0.6 auto-versioning system was removed -- it was never being kept in sync with `package.json`), and the v2.3.4 changelog entry's wording implied that merging without a version bump *was* the usual practice, when it was actually a deviation from it.
+
+- `package-lock.json`: regenerated via `npm install --package-lock-only` so the root `version` (and `packages[""].version`) now match `package.json` (`2.3.5`)
+- `CHANGELOG_RAMS.md`: reworded the v2.3.4 entry to say the no-bump merge "broke from" the usual practice, not that it followed it
+- No app code changed.
+
+**Rollback:** `git revert <this commit>`.
+
+---
+
 ## 2026-08-21 -- v2.3.4: Docs-only release -- README rewrite, handover header fix, version bump
 
 Two prior fixes (HANDOVER_RAMS.md header staleness and the README rewrite) merged to `main` without a version bump, breaking from the project's usual practice of bumping for every merged change -- including docs-only ones -- so the in-app footer version reliably reflects what's actually deployed. This entry retroactively covers both, plus bumps the version so the deploy is verifiable from the GUI.

@@ -4,6 +4,20 @@ All entries newest-first. Every entry includes a **Rollback** line.
 
 ---
 
+## 2026-08-21 -- v2.3.6: Fix "Add New Template" dead-end; ramsDocuments incident resolved
+
+The `ramsDocuments` collection being empty was the one collection left unexplained from the 2026-08-20/21 production data-loss incident (`teamMembers`/`riskAssessments` were real bugs, fixed in v2.3.0; `jobTemplates` was already confirmed as intentional staff cleanup). The user has now confirmed `ramsDocuments` was also legitimate staff cleanup via the existing, correctly-labeled Delete feature on the Saved RAMS list -- not a bug. The incident is fully resolved; see `HANDOVER_RAMS.md` for the closed-out writeup.
+
+Separately, fixed a real bug found during that same investigation: with zero job templates, Step 3's "Select Job Template" dropdown had only one DOM option ("+ Add New Template..."), which the browser treats as already-selected -- a real click fires no `change` event, so the form to create a template never opened. This left no way to create a *first* template through the UI once `jobTemplates` was empty.
+
+- `src/App.js`: added an always-clickable "+ New Template" button next to the dropdown that calls `setShowNewTemplateForm(true)` directly, independent of the `<select>`'s `onChange` -- sidesteps the single-option browser edge case entirely instead of trying to force a synthetic change event
+- `src/App.js`: `initialTemplateKey` no longer hardcodes `'G43'` (a template that may not exist, e.g. after cleanup) -- now defaults to the first real template key, or `''` if none exist. `buildInitialTasks` already handled an empty/missing template key gracefully (falls back to "all tasks, disabled"), so this is a safe default change, not a new code path
+- Verified against the real sandbox project with `jobTemplates` genuinely empty (matching production's actual state, confirmed via a direct Firestore count first): confirmed the dropdown renders exactly one option, the new button is present, and clicking it opens the "Create New Template" form -- real Puppeteer browser test, not just a build check
+
+**Rollback:** `git revert <this commit>`.
+
+---
+
 ## 2026-08-21 -- v2.3.5: Address Copilot PR review feedback on v2.3.4
 
 Copilot's automated review on PR #12 flagged two real issues: `package-lock.json`'s root `version` field was stale at `0.0.48` (a leftover from before the pre-2.0.6 auto-versioning system was removed -- it was never being kept in sync with `package.json`), and the v2.3.4 changelog entry's wording implied that merging without a version bump *was* the usual practice, when it was actually a deviation from it.

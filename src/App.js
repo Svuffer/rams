@@ -455,6 +455,17 @@ const Step3 = ({ data, allTasks, allTemplates, handlers, showNewTemplateForm, sh
                             ))}
               <option value="--add-new--" className="font-bold text-[var(--uctel-blue)]"> + Add New Template...</option>
                         </select>
+            <button
+              type="button"
+              onClick={() => {
+                handlers.setShowNewTemplateForm(true);
+                handlers.setShowEditTemplateForm(false);
+              }}
+              title="Create a new job template"
+              className="px-4 py-2 text-sm font-semibold text-[var(--uctel-blue)] bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors whitespace-nowrap"
+            >
+              + New Template
+            </button>
             {data.jobTemplate && data.jobTemplate !== '--add-new--' && allTemplates[data.jobTemplate] && (
               <>
                 <button
@@ -777,7 +788,7 @@ useEffect(() => {
      // This effect now runs once the initial data fetch is complete, even if some collections are empty.
      // This prevents the app from getting stuck on the loading screen.
      if (!isLoading && !formData) {
-      const initialTemplateKey = 'G43';
+      const initialTemplateKey = Object.keys(allTemplates)[0] || '';
       const initialPreparedBy = '';
       const initialDocumentDate = new Date().toISOString().slice(0, 10);
       const initialFormState = {

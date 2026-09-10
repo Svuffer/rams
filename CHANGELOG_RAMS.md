@@ -4,6 +4,24 @@ All entries newest-first. Every entry includes a **Rollback** line.
 
 ---
 
+## 2026-09-10 -- v2.3.8: Replace Tailwind CDN script with a build-time pipeline
+
+`public/index.html` loaded `<script src="https://cdn.tailwindcss.com"></script>` -- the Tailwind "Play CDN" build, meant for prototyping only, flagged by its own `should not be used in production` console warning on every page load. It shipped the full JIT compiler as JS and recompiled utility CSS in the browser on every visit instead of once at build time, and added an unnecessary third-party network dependency to the page's critical rendering path. Found while investigating an unrelated browser console log. The app has no other source of its styling -- `className` strings using Tailwind utilities (including arbitrary-value syntax like `bg-[var(--uctel-teal)]`) appear 435+ times across 17 files, and no `tailwindcss` package was installed -- so this needed a real migration, not just deleting the tag.
+
+Create React App (`react-scripts` 5.0.1) doesn't expose its PostCSS config without ejecting, so added CRACO (Create React App Configuration Override) as a thin wrapper to inject a real PostCSS pipeline.
+
+- `package.json`: added `@craco/craco`, `tailwindcss`, `postcss`, `autoprefixer` as devDependencies; `start`/`build`/`test` scripts now call `craco` instead of `react-scripts` (kept the same `cross-env`/port wrapping); `eject` untouched
+- `craco.config.js` (new): `style.postcss.mode: 'file'`, telling CRACO's postcss-loader override to read `postcss.config.js` directly rather than merging plugins inline -- the inline-merge form (`style.postcss.plugins: [...]`) was tried first and silently did nothing (`@tailwind` at-rules passed through the build completely unprocessed, with no error logged), so switched to the file-based mode instead
+- `postcss.config.js` (new): registers `tailwindcss` and `autoprefixer`
+- `tailwind.config.js` (new): `content` globs cover `src/**/*.{js,jsx}` and `public/index.html`
+- `src/index.css`: added `@tailwind base; @tailwind components; @tailwind utilities;` at the top
+- `public/index.html`: removed the CDN `<script>` tag
+- Verified the built CSS actually contains generated utilities (not just an empty/unprocessed file) by grepping the production bundle for known classes (`.bg-teal-50`, `.flex`) and the arbitrary-value var reference (`var(--uctel-teal)`) -- all present; gzipped CSS grew from 2.08 kB to 6.77 kB, consistent with real utility generation replacing the empty shell. Also ran the actual app in a browser (Puppeteer, via the `/share/:code` route to sidestep an unrelated local-only Firebase-credential issue in the portal auth handshake) and confirmed the rendered page is fully styled -- rounded card, shadow, spacing, button colors all correct, no FOUC or unstyled content.
+
+**Rollback:** `git revert <this commit>`.
+
+---
+
 ## 2026-09-10 -- v2.3.7: Diagnose "Failed to save RAMS" reports (root cause not yet found)
 
 Reported failing consistently for one user, not reproducible for another on the same document type. The generic `catch` in `handleSaveDocument` was swallowing the real Firebase error and always showing "Failed to save RAMS. Please retry." A captured browser console log spanning 5+ hours showed the actual error firing on every single save attempt with an identical message: `FirebaseError: Property formData contains an invalid nested entity.` The same log also contains repeated, unrelated `ERR_INTERNET_DISCONNECTED`/`ERR_QUIC_PROTOCOL_ERROR` entries from genuine connectivity flakiness on that machine, and a separate `ERR_BLOCKED_BY_CLIENT` sighting (on a different affected user's browser, a different session) turned out to be a browser extension blocking an unrelated WebChannel teardown ping -- neither is the actual cause, since the save failure rate is 100% and identically worded across the whole session regardless of those network blips.

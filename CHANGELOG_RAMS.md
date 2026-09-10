@@ -4,6 +4,19 @@ All entries newest-first. Every entry includes a **Rollback** line.
 
 ---
 
+## 2026-09-10 -- v2.3.7: Diagnose "Failed to save RAMS" reports (root cause not yet found)
+
+Reported failing consistently for one user, not reproducible for another on the same document type. The generic `catch` in `handleSaveDocument` was swallowing the real Firebase error and always showing "Failed to save RAMS. Please retry." A captured browser console log spanning 5+ hours showed the actual error firing on every single save attempt with an identical message: `FirebaseError: Property formData contains an invalid nested entity.` The same log also contains repeated, unrelated `ERR_INTERNET_DISCONNECTED`/`ERR_QUIC_PROTOCOL_ERROR` entries from genuine connectivity flakiness on that machine, and a separate `ERR_BLOCKED_BY_CLIENT` sighting (on a different affected user's browser, a different session) turned out to be a browser extension blocking an unrelated WebChannel teardown ping -- neither is the actual cause, since the save failure rate is 100% and identically worded across the whole session regardless of those network blips.
+
+Firestore rejects an array nested directly inside another array (or nesting deeper than 20 levels). `prepareFormForPersistence`'s `JSON.parse(JSON.stringify(formData))` clone already guarantees the rest of the payload is plain-JSON-safe (no class instances, no circular refs -- either would throw before the Firestore call is ever reached, not inside the `try` block where this error is actually caught), so that's the only remaining explanation for a rejection at this point in the code. A manual pass over the reachable data shapes (`selectedTasks`, `risks`/hazard CRUD, `DEFAULT_PPE`/`TOOLS`/`MATERIALS`/`PERMITS`) found nothing -- all arrays-of-objects, no arrays-of-arrays -- so the actual offending field is in data this review didn't cover (most likely something entered through the app rather than a seeded default).
+
+- `src/App.js`: added `findFirestoreNestingViolation()`, a recursive walk that finds the first illegal nesting and returns its exact dotted/indexed path. Called on `preparedForm` right before the Firestore write in `handleSaveDocument` -- on the next failed save this reports `Failed to save RAMS: invalid data at formData.<exact.path>` (logged to console and shown in the on-screen banner) instead of the generic message.
+- No fix yet -- this is instrumentation to identify the real fix. Next step is getting the affected user to retry and report the path it names.
+
+**Rollback:** `git revert <this commit>`.
+
+---
+
 ## 2026-08-21 -- v2.3.6: Fix "Add New Template" dead-end; ramsDocuments incident resolved
 
 The `ramsDocuments` collection being empty was the one collection left unexplained from the 2026-08-20/21 production data-loss incident (`teamMembers`/`riskAssessments` were real bugs, fixed in v2.3.0; `jobTemplates` was already confirmed as intentional staff cleanup). The user has now confirmed `ramsDocuments` was also legitimate staff cleanup via the existing, correctly-labeled Delete feature on the Saved RAMS list -- not a bug. The incident is fully resolved; see `HANDOVER_RAMS.md` for the closed-out writeup.

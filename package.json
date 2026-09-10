@@ -1,6 +1,6 @@
 {
   "name": "rams-generator",
-  "version": "2.3.6",
+  "version": "2.3.7",
   "private": true,
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",

@@ -94,6 +94,41 @@ const buildDefaultSignatureBlock = (preparedByValue, documentDate) => ({
   mode: 'typed',
   signatureImage: null,
 });
+
+// Firestore rejects an array that directly contains another array (and caps
+// nesting at 20 levels). JSON.parse(JSON.stringify(...)) already guarantees
+// every value here is a plain string/number/boolean/null/array/object, so
+// this is the only structural rule left that can still fail -- this walks
+// the tree looking for exactly that, so a save failure names the offending
+// field instead of just saying "Please retry."
+const findFirestoreNestingViolation = (value, path = '', depth = 0) => {
+  if (depth > 20) {
+    return `${path} (nesting deeper than 20 levels)`;
+  }
+  if (Array.isArray(value)) {
+    for (let i = 0; i < value.length; i += 1) {
+      const item = value[i];
+      const itemPath = `${path}[${i}]`;
+      if (Array.isArray(item)) {
+        return itemPath;
+      }
+      const nested = findFirestoreNestingViolation(item, itemPath, depth + 1);
+      if (nested) {
+        return nested;
+      }
+    }
+    return null;
+  }
+  if (value && typeof value === 'object') {
+    for (const key of Object.keys(value)) {
+      const nested = findFirestoreNestingViolation(value[key], path ? `${path}.${key}` : key, depth + 1);
+      if (nested) {
+        return nested;
+      }
+    }
+  }
+  return null;
+};
 // [SEC 200 END]
 
 // [SEC 300] Inline components
@@ -649,6 +684,14 @@ const AppContent = () => {
 
     const preparedForm = prepareFormForPersistence();
     if (!preparedForm) {
+      return;
+    }
+
+    const nestingViolation = findFirestoreNestingViolation(preparedForm, 'formData');
+    if (nestingViolation) {
+      console.error('RAMS save blocked -- Firestore-illegal nesting at', nestingViolation, preparedForm);
+      setSaveFeedback(`Failed to save RAMS: invalid data at ${nestingViolation}. Please report this to support.`);
+      setTimeout(() => setSaveFeedback(''), 8000);
       return;
     }
 

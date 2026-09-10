@@ -4,6 +4,19 @@ All entries newest-first. Every entry includes a **Rollback** line.
 
 ---
 
+## 2026-09-10 -- v2.3.9: Show git commit SHA in the version footer
+
+Today's Tailwind fix (v2.3.8) surfaced how hard it currently is to tell "merged" apart from "actually deployed": on this repo's Vercel Hobby plan, a merge commit not authored by a team member with Vercel access gets silently blocked (`Deployment was blocked`), and only a follow-up trigger commit from dj-iv actually ships it -- the version number alone doesn't distinguish "the commit that's live" from "the commit that's merged but still waiting."
+
+- `scripts/with-git-sha.js` (new): wraps `craco start`/`craco build`, resolving `git rev-parse --short HEAD` and injecting it as `REACT_APP_GIT_SHA` into the child process's env. Deliberately uses `rev-parse` (reads the current commit object only) rather than the `rev-list --count` approach the old, removed auto-versioning script used -- that one broke specifically because it needed full history depth, which Vercel's shallow clone doesn't provide, and silently returned a much smaller wrong number instead of erroring (see the v2.0.6 entry below). `rev-parse --short HEAD` has no such dependency: even a `--depth=1` clone has the checked-out commit's own SHA available. Falls back to an empty string (footer just omits the parens) if `.git` isn't present at all, rather than failing the build.
+- `package.json`: `start`/`build` now route through `node scripts/with-git-sha.js <craco-command>` instead of calling `craco` directly; `cross-env` still wraps these for `PORT`/`CI` as before.
+- `src/App.js`: footer now renders `v{REACT_APP_VERSION}({REACT_APP_GIT_SHA})`, e.g. `v2.3.9(482ff50)` -- omits the parens entirely if the SHA is unavailable.
+- Verified: built locally, grepped the output bundle for the current `git rev-parse --short HEAD` value, found it present (count 1).
+
+**Rollback:** `git revert <this commit>`.
+
+---
+
 ## 2026-09-10 -- v2.3.8: Replace Tailwind CDN script with a build-time pipeline
 
 `public/index.html` loaded `<script src="https://cdn.tailwindcss.com"></script>` -- the Tailwind "Play CDN" build, meant for prototyping only, flagged by its own `should not be used in production` console warning on every page load. It shipped the full JIT compiler as JS and recompiled utility CSS in the browser on every visit instead of once at build time, and added an unnecessary third-party network dependency to the page's critical rendering path. Found while investigating an unrelated browser console log. The app has no other source of its styling -- `className` strings using Tailwind utilities (including arbitrary-value syntax like `bg-[var(--uctel-teal)]`) appear 435+ times across 17 files, and no `tailwindcss` package was installed -- so this needed a real migration, not just deleting the tag.

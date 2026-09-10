@@ -2100,7 +2100,7 @@ useEffect(() => {
             </div>
           </div>
           <footer className="mt-6 pb-2 text-center text-xs text-slate-400">
-            v{process.env.REACT_APP_VERSION}
+            v{process.env.REACT_APP_VERSION}{process.env.REACT_APP_GIT_SHA ? `(${process.env.REACT_APP_GIT_SHA})` : ''}
           </footer>
         </div>
       </div>

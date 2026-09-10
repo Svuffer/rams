@@ -1,6 +1,6 @@
 {
   "name": "rams-generator",
-  "version": "2.3.8",
+  "version": "2.3.9",
   "private": true,
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
@@ -29,8 +29,8 @@
   },
   "scripts": {
     "dev": "concurrently \"npm run serve-api\" \"npm start\"",
-    "start": "cross-env PORT=3304 craco start",
-    "build": "cross-env CI=false craco build",
+    "start": "cross-env PORT=3304 node scripts/with-git-sha.js start",
+    "build": "cross-env CI=false node scripts/with-git-sha.js build",
     "serve-api": "node server.js",
     "test": "craco test",
     "eject": "react-scripts eject"

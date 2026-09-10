@@ -1,8 +1,8 @@
 # HANDOVER — RAMS Generator
 
-**Version:** `package.json` `version` field — plain hand-bumped semver, currently `2.3.7`. No longer auto-derived from git commit count (that mechanism was removed 2026-08-20 — it silently produced wrong numbers under Vercel's shallow git clone; see §Current State). Bumped on **every** merged change, including docs-only ones, so the in-app footer version reliably reflects what's actually deployed.
+**Version:** `package.json` `version` field — plain hand-bumped semver, currently `2.3.8`. No longer auto-derived from git commit count (that mechanism was removed 2026-08-20 — it silently produced wrong numbers under Vercel's shallow git clone; see §Current State). Bumped on **every** merged change, including docs-only ones, so the in-app footer version reliably reflects what's actually deployed.
 **Status:** **Live in production** at https://rams-six.vercel.app (deployed 2026-08-20, latest fixes deployed 2026-09-10). Local dev environment working end-to-end against a dedicated sandbox Firebase project (see §Local Testing). **Data loss incident in the production Firestore project (`rams-generator-bdcb7`), discovered 2026-08-20, fully resolved 2026-08-21: `teamMembers`/`riskAssessments` were real bugs, fixed (v2.3.0); `jobTemplates`/`ramsDocuments` were both confirmed by the user to be intentional staff cleanup, not bugs. No backups exist for this project (billing never configured) — still a standing risk independent of this incident, see §Current State.**
-**Last updated:** 2026-09-10
+**Last updated:** 2026-09-10 (v2.3.8)
 
 ---
 
@@ -25,7 +25,7 @@ UCtel Portal (auth.uctel.co.uk)
                       └─ Firestore (ramsDocuments, standardTasks, jobTemplates, ...)
 ```
 
-**Frontend:** React 19 SPA, Tailwind CSS (CDN), React Router 7, @hello-pangea/dnd for drag-drop tasks
+**Frontend:** React 19 SPA, Tailwind CSS (build-time via CRACO/PostCSS, `tailwind.config.js` — was CDN `<script>` until v2.3.8), React Router 7, @hello-pangea/dnd for drag-drop tasks
 **API layer:** Express (dev) / Vercel serverless functions (prod) — `api/*.js`
 **PDF:** PDFlayer API (prod) · Puppeteer fallback (dev)
 **Public share:** `/share/:shareCode` — no auth, served via `GET /api/rams/share/:code`
@@ -149,6 +149,7 @@ To test locally without the developer's real UCtel Portal / Firebase secrets, a 
 
 | Date | Change | Detail |
 |------|--------|--------|
+| 2026-09-10 | Replace `cdn.tailwindcss.com` runtime script with a proper build-time Tailwind pipeline (v2.3.8) | [CHANGELOG_RAMS.md](CHANGELOG_RAMS.md) |
 | 2026-09-10 | Diagnose "Failed to save RAMS" reports: log the exact Firestore-illegal field path instead of a generic message (v2.3.7) | [CHANGELOG_RAMS.md](CHANGELOG_RAMS.md) |
 | 2026-08-21 | Fix "Add New Template" dead-end when jobTemplates is empty; ramsDocuments incident resolved (v2.3.6) | [CHANGELOG_RAMS.md](CHANGELOG_RAMS.md) |
 | 2026-08-21 | Address Copilot PR review: sync package-lock.json version, changelog wording (v2.3.5) | [CHANGELOG_RAMS.md](CHANGELOG_RAMS.md) |

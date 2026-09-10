@@ -4,6 +4,15 @@ All entries newest-first. Every entry includes a **Rollback** line.
 
 ---
 
+## 2026-09-10 -- v2.3.10: Local git identity set to `dj-iv` (environment only, no code change)
+
+- Set `git config --local user.name "dj-iv"` / `user.email "dj-iv@users.noreply.github.com"` in this repo's working copy so commits made here are attributed to the GitHub account Vercel recognizes as the deployment owner (see the v2.3.9 entry below -- this is exactly the "trigger commit from dj-iv" mechanism, now the default identity instead of a manual override). `--local` scope only -- does not touch global git config or any other repo. See workspace `HANDOVER.md` "Git Identity" section for full detail (applied identically across all four cloned apps).
+- No application code changed. Version bumped per this project's standing convention (bump on every merged change, even docs-only, so the footer reflects deploy state).
+
+**Rollback:** `git config --local --unset user.name && git config --local --unset user.email` in this repo. No commit to revert -- this was a local config change only.
+
+---
+
 ## 2026-09-10 -- v2.3.9: Show git commit SHA in the version footer
 
 Today's Tailwind fix (v2.3.8) surfaced how hard it currently is to tell "merged" apart from "actually deployed": on this repo's Vercel Hobby plan, a merge commit not authored by a team member with Vercel access gets silently blocked (`Deployment was blocked`), and only a follow-up trigger commit from dj-iv actually ships it -- the version number alone doesn't distinguish "the commit that's live" from "the commit that's merged but still waiting."
